@@ -40,9 +40,9 @@ export function ScoreRing({ score, size = 132, className, label = "Proof Score" 
           strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={c}
-          initial={{ strokeDashoffset: reduce ? c * (1 - pct) : c }}
+          initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c * (1 - pct) }}
-          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          transition={reduce ? { duration: 0 } : { duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">

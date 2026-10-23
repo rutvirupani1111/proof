@@ -1,10 +1,10 @@
 "use client";
 
 import { ArrowDown, ArrowRight } from "lucide-react";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { rosettePath, SealGlyph } from "@/components/ui/seal-glyph";
@@ -14,6 +14,20 @@ const HeroCanvas = dynamic(() => import("./hero-canvas"), { ssr: false });
 
 const CLAIM_COUNT = 14;
 
+const RM_QUERY = "(prefers-reduced-motion: reduce)";
+function subscribeReducedMotion(cb: () => void) {
+  const mq = window.matchMedia(RM_QUERY);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+/**
+ * Reduced-motion preference that is `false` during SSR AND hydration, then the real value: the
+ * hero swaps whole layouts on it, so it must never mismatch the server HTML.
+ */
+function useReducedMotionPref() {
+  return useSyncExternalStore(subscribeReducedMotion, () => window.matchMedia(RM_QUERY).matches, () => false);
+}
+
 /**
  * Landing hero. The headline is plain server-rendered HTML (it is the LCP element); the R3F
  * scene loads lazily behind it. Scrolling the 220svh runway drives the claims-to-seals collapse.
@@ -21,7 +35,7 @@ const CLAIM_COUNT = 14;
  */
 export function Hero({ featured }: { featured?: ReactNode }) {
   const ref = useRef<HTMLElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionPref();
   const { resolved } = useTheme();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [mode, setMode] = useState<"pending" | "3d" | "static">("pending");

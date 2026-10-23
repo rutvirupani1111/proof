@@ -127,7 +127,11 @@ function measure() {
   }
   const small = [];
   for (const el of document.querySelectorAll("a[href], button, [role=button], input:not([type=hidden]), select, [role=tab], [role=checkbox], [role=switch]")) {
-    const r = el.getBoundingClientRect();
+    // A visually hidden skip link is not a target until it is focused (then it is 40 px tall).
+    if (el.classList.contains("sr-only")) continue;
+    // A checkbox or radio inside a <label> is tapped through its label, so the label is the target.
+    const isToggle = el.tagName === "INPUT" && (el.type === "checkbox" || el.type === "radio");
+    const r = (isToggle && el.closest("label") ? el.closest("label") : el).getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
     const s = getComputedStyle(el);
     if (s.visibility === "hidden" || s.display === "none") continue;
@@ -201,6 +205,7 @@ try {
 writeFileSync(join(OUT, "report.json"), JSON.stringify(report, null, 2));
 const over = report.filter((r) => r.overflow);
 const errs = report.filter((r) => r.consoleErrors?.length);
-console.log(`\n${report.length} captures, ${over.length} overflowing, ${errs.length} with console errors`);
+const smallTotal = report.reduce((n, r) => n + (r.smallTargets?.length ?? 0), 0);
+console.log(`\n${report.length} captures, ${over.length} overflowing, ${errs.length} with console errors, ${smallTotal} tap targets under 40 px at 375`);
 for (const r of over) console.log(`  overflow ${r.viewport} ${r.path}: ${r.offenders.map((o) => o.el).join(" | ")}`);
 process.exit(over.length ? 1 : 0);

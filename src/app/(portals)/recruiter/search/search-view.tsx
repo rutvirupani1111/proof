@@ -494,10 +494,10 @@ function FilterRail({
       <FilterGroup title="College">
         <div className="grid gap-1.5">
           {facets.colleges.map((c) => (
-            <label key={c.id} className="flex cursor-pointer items-start gap-2.5 text-sm">
+            <label key={c.id} className="flex cursor-pointer items-start gap-2.5 text-sm max-sm:items-center">
               <input
                 type="checkbox"
-                className="mt-0.5 size-4 accent-[var(--violet)]"
+                className="mt-0.5 size-4 accent-[var(--violet)] max-sm:mt-0 max-sm:size-5"
                 checked={!!filters.collegeIds?.includes(c.id)}
                 onChange={() => patch({ collegeIds: toggle(filters.collegeIds, c.id) })}
               />

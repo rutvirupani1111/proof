@@ -73,7 +73,7 @@ export function NudgeView({ students, total }: { students: Student[]; total: num
           <label className="flex items-center gap-3 border-b border-line bg-surface-2/60 px-4 py-2.5 text-sm">
             <input
               type="checkbox"
-              className="size-4 accent-[var(--violet)]"
+              className="size-4 accent-[var(--violet)] max-sm:size-5"
               checked={allOn}
               onChange={() =>
                 setSelected((cur) => {
@@ -95,7 +95,7 @@ export function NudgeView({ students, total }: { students: Student[]; total: num
                   <label className="flex cursor-pointer items-center gap-3 px-4 py-3">
                     <input
                       type="checkbox"
-                      className="size-4 shrink-0 accent-[var(--violet)]"
+                      className="size-4 shrink-0 accent-[var(--violet)] max-sm:size-5"
                       checked={selected.has(s.userId)}
                       onChange={() =>
                         setSelected((cur) => {

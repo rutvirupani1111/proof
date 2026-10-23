@@ -141,7 +141,7 @@ function ShortlistCard({ list, onDeleted }: { list: List; onDeleted: () => void 
                 <motion.li key={p.userId} layout exit={{ opacity: 0, height: 0 }} transition={springs.gentle} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                   <input
                     type="checkbox"
-                    className="size-4 shrink-0 accent-[var(--violet)]"
+                    className="size-4 shrink-0 accent-[var(--violet)] max-sm:size-5"
                     checked={on}
                     disabled={!on && picked.length >= 3}
                     onChange={() => togglePick(p.userId)}

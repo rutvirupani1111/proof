@@ -240,7 +240,7 @@ export function SkillConstellation({ skills, evidence }: { skills: DossierSkill[
                     style={{ opacity: dim ? 0.25 : 1, transition: "opacity 200ms" }}
                   >
                     {/* Generous invisible hit area for touch. */}
-                    <circle r={14} fill="transparent" />
+                    <circle r={21} fill="transparent" />
                     <motion.g
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: isActive ? 1.5 : 1, opacity: 1 }}

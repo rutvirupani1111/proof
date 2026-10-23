@@ -183,6 +183,31 @@
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /*
+   * Phone tap targets. Below `sm` every control reaches 40 x 40 px (WCAG 2.5.8 asks 24, Apple and
+   * Material ask 44 / 48) without touching the desktop density. Zero-specificity `:where()` so any
+   * explicit `min-h-*` / `min-w-*` utility still wins. Truly inline links in running copy are
+   * exempt (min-height does not apply to inline boxes). Checkboxes and radios grow to 20 px and their
+   * wrapping <label> is the 40 px target.
+   */
+  @media (max-width: 639.98px) {
+    :where(button, [role="button"], [role="tab"], [role="checkbox"], [role="switch"], summary, select,
+      a[href]:not(.sr-only), input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"])) {
+      min-height: 2.5rem;
+      min-width: 2.5rem;
+    }
+    :where(a[href].truncate) {
+      line-height: 2.5rem;
+    }
+    :where(input[type="checkbox"], input[type="radio"]) {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+    :where(label:has(> input[type="checkbox"], > input[type="radio"])) {
+      min-height: 2.5rem;
+      align-items: center;
+    }
+  }
 }
 
 @layer utilities {

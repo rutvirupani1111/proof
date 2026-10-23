@@ -1,0 +1,31 @@
+# Dependabot opens pull requests that update dependencies. Each one runs CI like any other PR,
+# so a green check tells you the update is safe to merge. See docs/CICD.md.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+    groups:
+      # Patch and minor updates arrive as one pull request a week instead of dozens.
+      npm-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+      # Major updates are grouped too, but kept apart: they are the ones that can break things.
+      npm-major:
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns: ["*"]

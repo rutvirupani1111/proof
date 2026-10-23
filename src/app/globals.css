@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+/* Theme is chosen by data-theme on <html> (set before paint by the inline script in layout). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* -------------------------------------------------------------------------- */
+/* Tokens. Light = warm paper, dark = ink night. Components only use these.   */
+/* -------------------------------------------------------------------------- */
+:root {
+  --canvas: #f6f3ec;
+  --surface: #fffdf8;
+  --surface-2: #efebe2;
+  --surface-3: #e6e1d5;
+  --line: #e0dacd;
+  --line-strong: #cbc3b2;
+  --ink: #16151a;
+  --muted: #5c5850;
+  --subtle: #6f6a60;
+
+  --lime: #c6f432;
+  --lime-ink: #0a0b10; /* text on lime */
+  --verified: #3f5a00; /* lime-family text that passes AA on paper */
+  --verified-soft: #eaf8c0;
+
+  --violet: #7c5cff;
+  --violet-text: #5536e6;
+  --violet-soft: #ece7ff;
+
+  --coral: #ff6b4a;
+  --coral-text: #c23a1a;
+  --coral-soft: #ffe6df;
+
+  --ring: #7c5cff;
+  --overlay: rgb(22 21 26 / 0.42);
+  --shadow-card: 0 1px 0 rgb(22 21 26 / 0.04), 0 8px 24px -12px rgb(22 21 26 / 0.12);
+  --shadow-pop: 0 16px 48px -16px rgb(22 21 26 / 0.28);
+  --ledger: rgb(22 21 26 / 0.055);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --canvas: #0a0b10;
+  --surface: #11131a;
+  --surface-2: #171a23;
+  --surface-3: #1f2330;
+  --line: #242836;
+  --line-strong: #343a4c;
+  --ink: #f3f0e8;
+  --muted: #a7a399;
+  --subtle: #8d8981;
+
+  --lime: #c6f432;
+  --lime-ink: #0a0b10;
+  --verified: #c6f432;
+  --verified-soft: rgb(198 244 50 / 0.12);
+
+  --violet: #7c5cff;
+  --violet-text: #a993ff;
+  --violet-soft: rgb(124 92 255 / 0.16);
+
+  --coral: #ff6b4a;
+  --coral-text: #ff8a6e;
+  --coral-soft: rgb(255 107 74 / 0.14);
+
+  --ring: #a993ff;
+  --overlay: rgb(3 4 8 / 0.66);
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 24px 64px -20px rgb(0 0 0 / 0.75);
+  --ledger: rgb(243 240 232 / 0.045);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-lime: var(--lime);
+  --color-lime-ink: var(--lime-ink);
+  --color-verified: var(--verified);
+  --color-verified-soft: var(--verified-soft);
+  --color-violet: var(--violet);
+  --color-violet-text: var(--violet-text);
+  --color-violet-soft: var(--violet-soft);
+  --color-coral: var(--coral);
+  --color-coral-text: var(--coral-text);
+  --color-coral-soft: var(--coral-soft);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
+  --radius-card: 1.125rem;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-fade-in: fade-in 180ms var(--ease-out-quint);
+  --animate-fade-out: fade-out 140ms ease-in;
+  --animate-pop-in: pop-in 220ms var(--ease-out-quint);
+  --animate-pop-out: pop-out 140ms ease-in;
+  --animate-sheet-in-left: sheet-in-left 280ms var(--ease-out-quint);
+  --animate-sheet-out-left: sheet-out-left 200ms ease-in;
+  --animate-sheet-in-right: sheet-in-right 280ms var(--ease-out-quint);
+  --animate-sheet-out-right: sheet-out-right 200ms ease-in;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+}
+@keyframes pop-out {
+  to { opacity: 0; transform: translateY(2px) scale(0.98); }
+}
+@keyframes sheet-in-left {
+  from { transform: translateX(-100%); }
+}
+@keyframes sheet-out-left {
+  to { transform: translateX(-100%); }
+}
+@keyframes sheet-in-right {
+  from { transform: translateX(100%); }
+}
+@keyframes sheet-out-right {
+  to { transform: translateX(100%); }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: var(--lime);
+    color: var(--lime-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  /* Ruled "ledger" paper lines. */
+  .bg-ledger {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      var(--ledger) 31px,
+      var(--ledger) 32px
+    );
+  }
+  /* Faint dot grid for hero / empty areas. */
+  .bg-dots {
+    background-image: radial-gradient(var(--line-strong) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .text-balance { text-wrap: balance; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

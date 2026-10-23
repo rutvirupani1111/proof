@@ -1,0 +1,25 @@
+# deps
+/node_modules
+
+# next
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# local database (PGlite)
+/.data/
+
+# env
+.env
+.env*.local
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+.vercel
+/coverage
+/test-results
+/playwright-report

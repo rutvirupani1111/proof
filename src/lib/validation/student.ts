@@ -102,3 +102,36 @@ export const submitAttemptSchema = z.object({
   pasteEvents: z.number().int().min(0).max(10_000),
   tabBlurs: z.number().int().min(0).max(10_000),
 });
+
+/**
+ * Notification categories a student can mute. `prefix` matches `notifications.type`
+ * ("message.new" -> "message"). Muted categories are still stored, just not shown in the bell.
+ */
+export const NOTIFICATION_CATEGORIES = [
+  { key: "message", label: "Messages", description: "A recruiter wrote to you." },
+  { key: "application", label: "Applications", description: "Your application moved to a new stage." },
+  { key: "drive", label: "College drives", description: "You became eligible for, or were selected in, a drive." },
+  { key: "evidence", label: "Verified evidence", description: "A proof was verified and your score changed." },
+  { key: "attestation", label: "Endorsements", description: "A mentor endorsed, declined or revoked." },
+  { key: "check", label: "Skill checks", description: "A recruiter invited you to a check, or an attempt finished." },
+  { key: "college", label: "Placement cell nudges", description: "Next-step suggestions from your placement cell." },
+] as const;
+export const NOTIFICATION_KEYS = NOTIFICATION_CATEGORIES.map((c) => c.key) as [
+  (typeof NOTIFICATION_CATEGORIES)[number]["key"],
+  ...(typeof NOTIFICATION_CATEGORIES)[number]["key"][],
+];
+
+export const studentAccountSchema = z.object({
+  name: z.string().trim().min(2, "Use at least 2 characters").max(80, "Keep it under 80 characters"),
+});
+
+export const studentPrivacySchema = z.object({
+  visibility: z.enum(VISIBILITIES),
+  openToWork: z.boolean(),
+});
+
+export const studentNotificationsSchema = z.object({
+  muted: z.array(z.enum(NOTIFICATION_KEYS)).max(NOTIFICATION_CATEGORIES.length),
+});
+
+export const driveRegistrationSchema = z.object({ driveId: z.string().uuid() });

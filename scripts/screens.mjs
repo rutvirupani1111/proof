@@ -35,7 +35,7 @@ const ROLES = [
   {
     role: "student",
     email: "ishita@spit-surat.example",
-    pages: ["/student", "/student/onboarding", "/student/proofs", "/student/checks", "@check", "/student/profile", "/student/jobs", "/student/applications"],
+    pages: ["/student", "/student/onboarding", "/student/proofs", "/student/checks", "@check", "/student/profile", "/student/jobs", "/student/applications", "/student/messages", "/student/settings"],
   },
   {
     role: "recruiter",

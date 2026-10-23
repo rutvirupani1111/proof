@@ -271,6 +271,8 @@ export const studentProfiles = pgTable(
     accentColor: text("accent_color"),
     pinnedEvidenceIds: text("pinned_evidence_ids").array().notNull().default(sql`'{}'::text[]`),
     openToWork: boolean("open_to_work").notNull().default(true),
+    /** Notification categories the student muted in settings (see NOTIFICATION_CATEGORIES). */
+    mutedNotifications: text("muted_notifications").array().notNull().default(sql`'{}'::text[]`),
     /** Overall Proof Score 0-100, recomputed by the scoring engine. */
     proofScore: integer("proof_score").notNull().default(0),
     scoreBreakdown: jsonb("score_breakdown").$type<ScoreBreakdown>(),

@@ -51,10 +51,10 @@ export const NAV: Record<Portal, NavSection[]> = {
       items: [
         { label: "Jobs", href: "/student/jobs", icon: Briefcase },
         { label: "Applications", href: "/student/applications", icon: ClipboardList },
-        { label: "Messages", href: "/student/messages", icon: MessageSquare, soon: true },
+        { label: "Messages", href: "/student/messages", icon: MessageSquare },
       ],
     },
-    { items: [{ label: "Settings", href: "/student/settings", icon: Settings, soon: true }] },
+    { items: [{ label: "Settings", href: "/student/settings", icon: Settings }] },
   ],
   recruiter: [
     { items: [{ label: "Dashboard", href: "/recruiter", icon: LayoutDashboard }] },

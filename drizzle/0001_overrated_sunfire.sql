@@ -1,0 +1,1 @@
+ALTER TABLE "student_profiles" ADD COLUMN "muted_notifications" text[] DEFAULT '{}'::text[] NOT NULL;

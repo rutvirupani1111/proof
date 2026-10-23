@@ -18,11 +18,14 @@ export function ThreadView({
   initial,
   canSend,
   backHref,
+  lockedHint = "This profile is hidden; you can't start a conversation.",
 }: {
   other: { id: string; name: string; image: string | null; subtitle: string | null; profileHref: string | null };
   initial: ThreadMessage[];
   canSend: boolean;
   backHref: string;
+  /** Composer placeholder while sending is not allowed. */
+  lockedHint?: string;
 }) {
   const [messages, setMessages] = useState(initial);
   const [draft, setDraft] = useState("");
@@ -124,7 +127,7 @@ export function ThreadView({
               send();
             }
           }}
-          placeholder={canSend ? "Write a message… (Enter to send)" : "This profile is hidden; you can't start a conversation."}
+          placeholder={canSend ? "Write a message… (Enter to send)" : lockedHint}
           className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm placeholder:text-subtle focus-visible:border-violet focus-visible:ring-4 focus-visible:ring-violet/20 focus-visible:outline-none disabled:opacity-60"
         />
         <Button type="submit" size="icon" aria-label="Send" disabled={!canSend || !draft.trim() || pending}>

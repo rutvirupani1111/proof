@@ -203,6 +203,8 @@ export function SkillConstellation({ skills, evidence }: { skills: DossierSkill[
                       }}
                       style={{ opacity: dim ? 0.35 : 1, transition: "opacity 200ms" }}
                     >
+                      {/* Hit area for touch: at least 42 px across. */}
+                      <circle r={Math.max(n.r + 9, 21)} fill="transparent" />
                       <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}>
                         <circle r={n.r + 9} fill="var(--lime)" opacity={isActive ? 0.22 : 0.08} />
                         <circle r={n.r} fill="var(--lime)" stroke="var(--canvas)" strokeWidth={2} />

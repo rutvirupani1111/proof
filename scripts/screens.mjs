@@ -132,7 +132,8 @@ function measure() {
     // A checkbox or radio inside a <label> is tapped through its label, so the label is the target.
     const isToggle = el.tagName === "INPUT" && (el.type === "checkbox" || el.type === "radio");
     const r = (isToggle && el.closest("label") ? el.closest("label") : el).getBoundingClientRect();
-    if (r.width === 0 || r.height === 0) continue;
+    // 1 px wide/tall elements are visually hidden form proxies (e.g. Radix Select's native <select>).
+    if (r.width <= 1 || r.height <= 1) continue;
     const s = getComputedStyle(el);
     if (s.visibility === "hidden" || s.display === "none") continue;
     // Inline text links inside running copy are exempt (WCAG 2.5.8 inline exception).

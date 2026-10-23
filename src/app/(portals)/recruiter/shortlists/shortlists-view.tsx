@@ -139,14 +139,16 @@ function ShortlistCard({ list, onDeleted }: { list: List; onDeleted: () => void 
               const on = picked.includes(p.userId);
               return (
                 <motion.li key={p.userId} layout exit={{ opacity: 0, height: 0 }} transition={springs.gentle} className="flex items-center gap-3 px-4 py-3 sm:px-5">
-                  <input
-                    type="checkbox"
-                    className="size-4 shrink-0 accent-[var(--violet)] max-sm:size-5"
-                    checked={on}
-                    disabled={!on && picked.length >= 3}
-                    onChange={() => togglePick(p.userId)}
-                    aria-label={`Select ${p.name} to compare`}
-                  />
+                  <label className="-m-2.5 grid size-10 shrink-0 cursor-pointer place-items-center sm:m-0 sm:size-auto">
+                    <input
+                      type="checkbox"
+                      className="size-4 shrink-0 accent-[var(--violet)] max-sm:size-5"
+                      checked={on}
+                      disabled={!on && picked.length >= 3}
+                      onChange={() => togglePick(p.userId)}
+                      aria-label={`Select ${p.name} to compare`}
+                    />
+                  </label>
                   <Avatar name={p.name} src={p.image} size="sm" />
                   <div className="min-w-0 flex-1">
                     <Link href={`/recruiter/candidates/${p.userId}`} className="text-sm font-medium hover:underline">

@@ -1,6 +1,6 @@
 # Build status
 
-Last updated: 2026-10-23 (foundation, engines, all four portals).
+Last updated: 2026-10-23 (foundation, engines, all four portals, public site).
 
 ## Done (foundation)
 
@@ -140,19 +140,64 @@ For other builders: recruiter/college domain verification can call `createDomain
 "company" | "college" })` and `consumeDomainMagicLink(token)`; links point at `/recruiter/verify-domain`
 and `/college/verify-domain`, which those portals still need to add.
 
+## Public site: landing v2, dossier, verify, marketing pages (built)
+
+Server: `src/server/public/` (`queries.ts` dossier + landing reads, `score.ts` wraps
+`computeProofScore`, `verify.ts` wraps `verifyCredential` / `verifyCredentialDocument`,
+`actions.ts` the public paste-verifier action, `site.ts` request origin + QR SVG via `qrcode`).
+Components: `src/components/landing/`, `src/components/profile/`; verify-only pieces live in
+`src/app/(public)/verify/_components/`. The public layout now uses `landing/site-header.tsx`
+(nav + mobile sheet) and `landing/site-footer.tsx`; `components/marketing/*` is no longer used.
+
+- **Landing** (`/`): R3F hero (`landing/hero-canvas.tsx`, its own chunk via `next/dynamic`,
+  `ssr: false`, mounted on `requestIdleCallback` only when WebGL is available and Save-Data is off).
+  Fourteen resume claims float as paper fragments (canvas textures); scrolling the 220svh runway
+  strikes them through (coral), flies them into formation and stamps them into lime seals joined as
+  a constellation. Scroll progress is a Motion value read inside `useFrame` (no React re-renders);
+  the frame loop stops when the hero is off-screen. The headline is server-rendered HTML (LCP);
+  reduced motion, no WebGL or Save-Data get a static SVG constellation and no runway. Then: live
+  evidence ticker (CSS-only marquee of the latest verified evidence from PUBLIC profiles only,
+  first name + initial), students / recruiters / colleges sections with product vignettes,
+  "How verification works" (5 steps, each with an animated mini demo, auto-advancing tabs with
+  arrow-key support), live ledger numbers (no testimonials), FAQ (`<details>`), CTA. Ticker,
+  numbers and the featured-dossier link stream in behind the hero via `Suspense`.
+- **Dossier** (`/u/[handle]`): header with Proof Score ring (live from `computeProofScore`) and a
+  stamped seal with the seal count, evidence-by-kind strip, skill constellation
+  (`profile/skill-constellation.tsx`: d3-force layout on a dark "night sky" island, skills are
+  hubs sized by score, each star is one evidence item, kinds told apart by shape; hover / focus /
+  tap shows the commit, deploy, check or endorsement facts with source + credential links; keyboard
+  operable), evidence cards ("slips" with facts, skills, source and `/verify` links; pinned first),
+  work timeline (grouped by month, repo spans from first to last commit), "Why N?" breakdown
+  against the engine's caps + its explanation lines, live per-skill scores, share panel with QR.
+  **Privacy:** hidden profiles 404 for everyone but the owner; recruiters-only profiles show a
+  sign-in prompt to non-recruiters; the owner sees a banner. `opengraph-image.tsx` renders a 1200x630
+  card for PUBLIC profiles only (generic card otherwise); `generateMetadata` only names public
+  profiles (others are `noindex`).
+- **Verify** (`/verify/[id]`, `/verify`): lime seal + "Authentic. Signature verified." or a coral
+  broken seal for tampered / revoked / expired / unknown, the engine's individual checks as a
+  pass/fail ledger, claim, subject (linked only if their profile is public), issuer + key id,
+  issued / expiry, the Ed25519 `proofValue`, raw JSON (highlighted, copy), QR to the page.
+  The paste-JSON verifier checks the pasted document's own signature first (no trust in our DB),
+  then the record (revocation, expiry), and names the top-level fields that differ from what Proof
+  issued. `/verify` also takes an id or a full verify link.
+- **Marketing**: `/for-recruiters` (interactive fictional evidence search whose results re-sort
+  with layout animations), `/for-colleges` (readiness vignette, features, rollout), `/pricing`
+  (Free for students forever; Hiring team per seat; Placement cell per campus; monthly / yearly
+  toggle; prices are illustrative), `/about` (story, principles, demo-data note).
+
 ## Not built yet (by area)
 
 | Area | Next steps |
 |---|---|
 | Verification engine | Built (see above). Left: scheduled health re-checks for all deployments (cron), re-import to refresh repo stats. |
 | Skill checks | Built. Left: more tasks and languages; plagiarism similarity across submissions. |
-| Credentials | Built; `/verify/[id]` + QR belong to the public area. Left: publish the issuer key at a `.well-known` URL, status list for revocation. |
+| Credentials | Built, including the public `/verify/[id]` page, paste-JSON verifier and QR. Left: publish the issuer key at a `.well-known` URL, status list for revocation. |
 | Scoring | Built; recomputed on every verification and in the seed. |
 | Student | Built except messages (reuse recruiter `ThreadView`), settings, and drive registration. |
 | Recruiter | Built (see "Recruiter + college" below). Left: real company domain verification (magic link) instead of the pending/verified display, emailed teammate invites, saved-search alerts when new evidence matches. |
 | College | Built (see below). Left: college domain verification flow, drive registration by students (student portal), offer CTC captured as a number for package stats. |
 | Mentor | Built. |
-| Public | Full dossier with skill constellation and timeline, pricing, for-colleges, for-recruiters pages, landing 3D hero (lazy R3F). |
+| Public | Built (see "Public site" above). Left: Playwright visual checks of the hero at 375 px, a downloadable credential JSON button, publishing the issuer key for offline verification. |
 | Testing | Vitest engines + scoping tests done. Left: Playwright smoke on port 5191. |
 | Deploy | Vercel project `proof` + Neon; set `DATABASE_URL`; `vercel-build` migrates; seed showcase with `PROOF_SEED_REMOTE=1`. |
 

@@ -1,234 +1,195 @@
-import {
-  ArrowRight,
-  BarChart3,
-  BookCheck,
-  Code2,
-  FileSignature,
-  GitBranch,
-  Globe,
-  KanbanSquare,
-  Search,
-  UserRoundCheck,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { HeroEvidence } from "@/components/marketing/hero-evidence";
-import { FadeIn, Stagger, StaggerItem } from "@/components/motion";
-import { Badge } from "@/components/ui/badge";
+import { Suspense, type ReactNode } from "react";
+import { CollegeVignette, RecruiterVignette, StudentVignette } from "@/components/landing/audience-visuals";
+import { CtaBand } from "@/components/landing/cta-band";
+import { EvidenceTicker } from "@/components/landing/evidence-ticker";
+import { Faq, type FaqItem } from "@/components/landing/faq";
+import { Hero } from "@/components/landing/hero";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { SectionIntro } from "@/components/landing/section-intro";
+import { StatsBand } from "@/components/landing/stats-band";
+import { FadeIn } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { SealGlyph } from "@/components/ui/seal-glyph";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getEvidenceTicker, getFeaturedHandle, getLandingStats } from "@/server/public/queries";
 
-const ENGINE: { icon: LucideIcon; title: string; body: string }[] = [
-  { icon: GitBranch, title: "GitHub ownership", body: "A public proof.md gist with your handle and a one-time nonce. No OAuth, no trust me." },
-  { icon: Code2, title: "Code authorship", body: "Your own commits, active weeks, languages and authorship share. Bulk-imported history gets flagged." },
-  { icon: Globe, title: "Live deployments", body: "A meta tag or /.well-known/proof.txt proves the site is yours, and we keep checking it is up." },
-  { icon: BookCheck, title: "Skill checks", body: "Timed tasks graded server-side in a sandbox against hidden tests. Signals shown, never auto-penalised." },
-  { icon: UserRoundCheck, title: "Mentor attestations", body: "Professors and seniors endorse specific work, from an institutional domain they proved they own." },
-  { icon: FileSignature, title: "Signed credentials", body: "Every item becomes an Ed25519-signed Verifiable Credential. Anyone can check it at /verify." },
-];
+// Ticker and numbers are live from the ledger; they stream in behind the static hero.
+export const dynamic = "force-dynamic";
 
-const AUDIENCES = [
+const AUDIENCES: { id: string; eyebrow: string; title: string; body: string; points: string[]; cta: { href: string; label: string }; visual: ReactNode }[] = [
   {
     id: "students",
     eyebrow: "For students",
     title: "Your work, finally legible.",
-    body: "Stop rewording the same resume. Connect GitHub, verify a live project, pass a skill check, and let your evidence do the talking.",
-    points: ["One shareable verified dossier", "A Proof Score that explains itself", "Apply with evidence, track every stage"],
-    cta: { label: "Build your Proof", href: "/signup?role=student" },
-    icon: GitBranch,
+    body: "Stop rewording the same resume. Prove a GitHub account, point at code you wrote, put a project online, pass a check. Your dossier fills itself with seals.",
+    points: ["One shareable verified dossier with a QR", "A Proof Score that shows its working", "Free forever, including every credential"],
+    cta: { href: "/signup?role=student", label: "Build your Proof" },
+    visual: <StudentVignette />,
   },
   {
     id: "recruiters",
     eyebrow: "For recruiters",
     title: "Search evidence, not keywords.",
-    body: "Filter by verified skill, live deployments, own commits and passed checks. Shortlist, compare and run your pipeline in one place.",
-    points: ["Evidence search with saved filters", "Compare up to three candidates", "Kanban pipeline with skill-check invites"],
-    cta: { label: "Hire on evidence", href: "/signup?role=recruiter" },
-    icon: Search,
+    body: "Filter by verified skill score, live deployments, own commits, passed checks and mentor endorsements. Shortlist, compare three side by side, run the pipeline.",
+    points: ["Evidence search with saved filters", "Skill-check invites with hidden tests", "Kanban pipeline, notes and messages"],
+    cta: { href: "/for-recruiters", label: "See the recruiter side" },
+    visual: <RecruiterVignette />,
   },
   {
     id: "colleges",
-    eyebrow: "For colleges",
-    title: "See who is truly job-ready.",
-    body: "A placement cell built on verified skills: cohort readiness, company drives with real eligibility, and placement stats you can export.",
-    points: ["Readiness funnel and skills gap", "Drives with eligible-student lists", "Nudges for incomplete proofs"],
-    cta: { label: "Set up your cell", href: "/signup?role=college" },
-    icon: BarChart3,
+    eyebrow: "For placement cells",
+    title: "Know who is truly job-ready.",
+    body: "A cohort view built on verified skills rather than self-reported ones: a readiness funnel, the skills gap, drives with real eligibility, and stats you can export.",
+    points: ["Readiness funnel and top skills gap", "Company drives with eligible lists", "Nudges for incomplete proofs"],
+    cta: { href: "/for-colleges", label: "See the college side" },
+    visual: <CollegeVignette />,
   },
 ];
 
-const SCORE = [
-  { label: "Code authorship", value: 31, max: 35 },
-  { label: "Live deployments", value: 18, max: 20 },
-  { label: "Skill checks", value: 21, max: 25 },
-  { label: "Mentor endorsements", value: 12, max: 20 },
+const FAQ: FaqItem[] = [
+  {
+    q: "Is Proof really free for students?",
+    a: "Yes, forever. Verification, the dossier, credentials, skill checks and applying to jobs cost students nothing. Recruiters and colleges pay for the hiring and placement tools.",
+  },
+  {
+    q: "Do I have to give Proof access to my GitHub?",
+    a: "No. You prove ownership by posting a public gist containing your Proof handle and a one-time code. Proof reads only public data from GitHub's API.",
+  },
+  {
+    q: "What stops someone copying a repo and claiming it?",
+    a: "Authorship is measured per commit author, not per repo. Forks without your own commits, history imported in one day, and repos created days ago with years of commits are all flagged.",
+  },
+  {
+    q: "How can a recruiter be sure a seal is real?",
+    a: "Every seal is an Ed25519-signed W3C Verifiable Credential. Open its /verify link or scan the QR: lime means Proof issued it and nothing changed; coral means it was altered, revoked or never issued.",
+  },
+  {
+    q: "Is the Proof Score a black box?",
+    a: "Never. Every score has a 'why' panel listing each contribution: authorship volume and recency, live deployments, passed checks and mentor endorsements. Recruiters see the same breakdown you do.",
+  },
+  {
+    q: "Who can see my profile?",
+    a: "You choose: public, recruiters only, or hidden. Hidden profiles return a 404 to everyone but you, and only public profiles appear in link previews or the live evidence ticker.",
+  },
+  {
+    q: "Can mentors endorse anything they like?",
+    a: "Mentors first prove an institutional email domain (a college or company). They then endorse a specific skill or project, shown as 'Verified mentor at @domain'. Endorsements are one input, never the whole score.",
+  },
 ];
+
+async function FeaturedLink() {
+  const handle = await getFeaturedHandle();
+  if (!handle) return null;
+  return (
+    <p className="mt-5 text-sm text-muted">
+      Or{" "}
+      <Link href={`/u/${handle}`} className="font-medium text-ink underline decoration-lime decoration-2 underline-offset-4 hover:decoration-verified">
+        open a real verified dossier
+      </Link>
+      .
+    </p>
+  );
+}
+
+async function Ticker() {
+  return <EvidenceTicker items={await getEvidenceTicker(18)} />;
+}
+
+async function Numbers() {
+  return <StatsBand stats={await getLandingStats()} />;
+}
 
 export default function LandingPage() {
   return (
     <main>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-dots [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)] opacity-70" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 pt-16 pb-24 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:pt-24">
-          <FadeIn>
-            <Badge variant="outline" mono className="mb-6 text-[11px] tracking-wider uppercase">
-              Hiring on verified work
-            </Badge>
-            <h1 className="font-display text-[2.6rem] leading-[0.98] font-semibold tracking-[-0.035em] text-balance sm:text-6xl lg:text-7xl">
-              Resumes are claims.
-              <br />
-              <span className="relative inline-block">
-                <span className="relative z-10">Proof is evidence.</span>
-                <span className="absolute inset-x-0 bottom-[0.08em] -z-0 h-[0.32em] -skew-x-6 bg-lime/80 dark:bg-lime/30" aria-hidden />
-              </span>
-            </h1>
-            <p className="mt-6 max-w-xl text-base text-pretty text-muted sm:text-lg">
-              Every year about a crore graduates in India apply with near-identical, increasingly AI-written resumes.
-              Proof turns real work into verified evidence: code you actually wrote, projects that are actually live,
-              checks you actually passed, and endorsements from real mentors.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
-                <Link href="/signup?role=student">
-                  Build your Proof <ArrowRight />
-                </Link>
-              </Button>
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/signup?role=recruiter">I am hiring</Link>
-              </Button>
-            </div>
-            <p className="mt-6 flex items-center gap-2 font-mono text-xs text-subtle">
-              <SealGlyph className="size-4 text-verified" /> Free for students. Every credential publicly verifiable.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.15} direction="left" className="mx-auto w-full max-w-md lg:max-w-none">
-            <HeroEvidence />
-          </FadeIn>
-        </div>
-      </section>
+      <Hero
+        featured={
+          <Suspense fallback={null}>
+            <FeaturedLink />
+          </Suspense>
+        }
+      />
 
-      {/* Verification engine */}
-      <section id="engine" className="scroll-mt-20 border-y border-line bg-surface-2/50">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <FadeIn inView className="max-w-2xl">
-            <p className="font-mono text-[11px] tracking-[0.14em] text-subtle uppercase">The verification engine</p>
-            <h2 className="mt-3 text-3xl font-semibold text-balance sm:text-4xl">Six ways a claim becomes evidence.</h2>
-            <p className="mt-3 text-muted">
-              Each check produces an evidence record and a signed credential. Nothing on a Proof profile is self-reported.
-            </p>
-          </FadeIn>
-          <Stagger inView className="mt-10 grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
-            {ENGINE.map(({ icon: Icon, title, body }, i) => (
-              <StaggerItem key={title} className="bg-surface p-6">
-                <div className="flex items-center justify-between">
-                  <span className="grid size-10 place-items-center rounded-xl bg-surface-2">
-                    <Icon className="size-5" aria-hidden />
-                  </span>
-                  <span className="font-mono text-xs text-subtle">0{i + 1}</span>
-                </div>
-                <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted">{body}</p>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
+      <Suspense fallback={<div className="h-[52px] border-y border-line bg-surface/70" />}>
+        <Ticker />
+      </Suspense>
 
       {/* Audiences */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          {AUDIENCES.map((a, i) => (
-            <FadeIn
-              key={a.id}
-              id={a.id}
-              inView
-              delay={i * 0.08}
-              className="flex scroll-mt-24 flex-col rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-card"
-            >
-              <span className="grid size-10 place-items-center rounded-xl bg-lime text-lime-ink">
-                <a.icon className="size-5" aria-hidden />
-              </span>
-              <p className="mt-5 font-mono text-[11px] tracking-[0.14em] text-subtle uppercase">{a.eyebrow}</p>
-              <h2 className="mt-2 text-2xl font-semibold">{a.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{a.body}</p>
-              <ul className="mt-5 grid gap-2 border-t border-dashed border-line-strong pt-5 text-sm">
-                {a.points.map((p) => (
-                  <li key={p} className="flex items-start gap-2">
-                    <SealGlyph className="mt-0.5 size-4 shrink-0 text-verified" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="secondary" asChild className="mt-6 self-start">
-                <Link href={a.cta.href}>
-                  {a.cta.label} <ArrowRight />
-                </Link>
-              </Button>
+      <div className="mx-auto grid max-w-6xl gap-24 px-4 py-24 sm:px-6 sm:py-28">
+        {AUDIENCES.map((a, i) => (
+          <section key={a.id} id={a.id} aria-labelledby={`${a.id}-h`} className="grid scroll-mt-24 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div className={i % 2 === 1 ? "lg:order-2" : undefined}>
+              <SectionIntro id={`${a.id}-h`} eyebrow={a.eyebrow} title={a.title}>
+                <p>{a.body}</p>
+              </SectionIntro>
+              <FadeIn inView delay={0.1}>
+                <ul className="mt-6 grid gap-2.5 border-t border-dashed border-line-strong pt-6 text-[15px]">
+                  {a.points.map((p) => (
+                    <li key={p} className="flex items-start gap-2.5">
+                      <SealGlyph className="mt-0.5 size-4.5 shrink-0 text-verified" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+                <Button variant="secondary" asChild className="mt-7">
+                  <Link href={a.cta.href}>
+                    {a.cta.label} <ArrowRight />
+                  </Link>
+                </Button>
+              </FadeIn>
+            </div>
+            <FadeIn inView delay={0.12} direction={i % 2 === 1 ? "right" : "left"} className="mx-auto w-full max-w-lg">
+              {a.visual}
             </FadeIn>
-          ))}
-        </div>
-      </section>
+          </section>
+        ))}
+      </div>
 
-      {/* Score */}
-      <section className="border-t border-line bg-surface-2/50">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <FadeIn inView>
-            <p className="font-mono text-[11px] tracking-[0.14em] text-subtle uppercase">Proof Score</p>
-            <h2 className="mt-3 text-3xl font-semibold text-balance sm:text-4xl">Never a black box.</h2>
-            <p className="mt-3 max-w-lg text-muted">
-              A 0-100 score per skill and overall, built from weighted evidence: authorship volume and recency, live
-              deployments, passed checks and mentor endorsements. Ask “why 82?” and see every line item.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Badge variant="neutral"><Users className="size-3" /> Recruiters see the same breakdown</Badge>
-              <Badge variant="neutral"><KanbanSquare className="size-3" /> Usable as a pipeline filter</Badge>
-            </div>
-          </FadeIn>
-          <FadeIn inView delay={0.1} className="rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-card">
-            <div className="flex items-end justify-between border-b border-line pb-4">
-              <div>
-                <p className="font-mono text-[11px] tracking-wider text-subtle uppercase">Why 82?</p>
-                <p className="font-display text-5xl font-semibold tabular text-verified">82</p>
-              </div>
-              <Badge variant="verified" mono>14 evidence items</Badge>
-            </div>
-            <ul className="mt-5 grid gap-4">
-              {SCORE.map((s) => (
-                <li key={s.label} className="grid gap-1.5">
-                  <div className="flex justify-between text-sm">
-                    <span>{s.label}</span>
-                    <span className="font-mono text-muted tabular">
-                      {s.value}/{s.max}
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-surface-2">
-                    <div className="h-full rounded-full bg-lime" style={{ width: `${(s.value / s.max) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto max-w-6xl px-4 py-24 text-center sm:px-6">
-        <FadeIn inView>
-          <h2 className="mx-auto max-w-3xl text-4xl font-semibold text-balance sm:text-5xl">
-            Show the work. <span className="text-verified">Get the seal.</span>
-          </h2>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button size="lg" asChild>
-              <Link href="/signup">Create your account</Link>
-            </Button>
-            <Button size="lg" variant="ghost" asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
+      {/* How verification works */}
+      <section id="how" aria-labelledby="how-h" className="scroll-mt-20 border-y border-line bg-surface-2/50">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+          <SectionIntro id="how-h" eyebrow="How verification works" title="Five steps from claim to signed evidence.">
+            <p>Nothing on a Proof dossier is self-reported. Each step produces an evidence record and a credential anyone can check.</p>
+          </SectionIntro>
+          <div className="mt-12">
+            <HowItWorks />
           </div>
-        </FadeIn>
+        </div>
       </section>
+
+      {/* Numbers */}
+      <section aria-labelledby="numbers-h" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <SectionIntro id="numbers-h" eyebrow="The ledger, live" title="No testimonials. Just the count.">
+          <p>Straight from the evidence ledger, right now. Every number below is made of seals you can open.</p>
+        </SectionIntro>
+        <div className="mt-10">
+          <Suspense fallback={<Skeleton className="h-72 w-full rounded-[var(--radius-card)]" />}>
+            <Numbers />
+          </Suspense>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" aria-labelledby="faq-h" className="scroll-mt-20 border-t border-line bg-surface-2/40">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-24 sm:px-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <SectionIntro id="faq-h" eyebrow="Questions" title="The fine print, in plain words.">
+            <p>
+              Still curious?{" "}
+              <Link href="/about" className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
+                Read why we built Proof
+              </Link>
+              .
+            </p>
+          </SectionIntro>
+          <FadeIn inView delay={0.08}>
+            <Faq items={FAQ} />
+          </FadeIn>
+        </div>
+      </section>
+
+      <CtaBand />
     </main>
   );
 }

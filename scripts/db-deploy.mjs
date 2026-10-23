@@ -45,6 +45,12 @@ async function main() {
     console.log("[db-deploy] No DATABASE_URL: skipping migrations and seed (local build).");
     return;
   }
+  // Preview builds (one per pull request) share the production database unless Neon
+  // branching is set up, so only production builds may change the schema or seed.
+  if (process.env.VERCEL && process.env.VERCEL_ENV !== "production") {
+    console.log(`[db-deploy] VERCEL_ENV=${process.env.VERCEL_ENV ?? "unknown"}: skipping migrations and seed (production only).`);
+    return;
+  }
   if (typeof WebSocket === "undefined") {
     throw new Error("[db-deploy] Node 22+ is required (the Neon driver needs a global WebSocket).");
   }

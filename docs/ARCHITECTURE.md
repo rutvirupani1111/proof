@@ -77,7 +77,8 @@ drizzle/                 generated SQL migrations (commit them)
    (they differ between PGlite and Neon).
 6. **Schema changes:** edit `src/db/schema.ts`, run `npm run db:generate`, commit the new file in
    `drizzle/`. PGlite auto-applies pending migrations on first connection in dev; production runs
-   `npm run db:migrate` in `vercel-build`. Never edit an applied migration.
+   `scripts/db-deploy.mjs` in `vercel-build` (migrate, then seed the demo only on an empty DB when
+   `SEED_DEMO=true`). Never edit an applied migration.
 7. **Pages that touch the DB are dynamic** (`export const dynamic = "force-dynamic"` or they read
    cookies). Never query the DB from a statically prerendered page: PGlite is single-process and
    `next build` runs several workers.

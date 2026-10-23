@@ -27,7 +27,7 @@ Every seeded account uses the password **`proof-demo-2026`** (local and the depl
 
 | Role | Email | Lands on |
 |---|---|---|
-| Student | `ishita@spit-surat.example` | `/student` (Proof Score 82, public profile `/u/ishita-varma`) |
+| Student | `ishita@spit-surat.example` | `/student` (Proof Score computed by the scoring engine from her seeded evidence, public profile `/u/ishita-varma`) |
 | Recruiter | `meera@kitecode.example` | `/recruiter` (Kitecode Labs, verified domain) |
 | Recruiter (domain pending) | `arjun@monsoonpay.example` | `/recruiter` |
 | Placement cell | `placements@spit-surat.example` | `/college` (SPIT Surat cohort) |

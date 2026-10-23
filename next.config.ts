@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     "quickjs-emscripten-core",
     "@jitl/quickjs-wasmfile-release-sync",
   ],
+  // The grader reads emscripten-module.wasm next to the variant's JS at runtime; file tracing can
+  // miss a URL-relative read, so ship it explicitly with the student routes that run checks.
+  outputFileTracingIncludes: {
+    "/student/**": ["./node_modules/@jitl/quickjs-wasmfile-release-sync/dist/**"],
+  },
   poweredByHeader: false,
   typedRoutes: false,
 };

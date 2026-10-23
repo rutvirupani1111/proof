@@ -40,12 +40,12 @@ const ROLES = [
   {
     role: "recruiter",
     email: "meera@kitecode.example",
-    pages: ["/recruiter", "/recruiter/search", "@candidate", "/recruiter/shortlists", "/recruiter/pipeline", "/recruiter/compare", "/recruiter/jobs", "/recruiter/messages", "/recruiter/company"],
+    pages: ["/recruiter", "/recruiter/search", "@candidate", "/recruiter/shortlists", "/recruiter/pipeline", "/recruiter/compare", "/recruiter/jobs", "/recruiter/messages", "/recruiter/company", "/recruiter/verify-domain"],
   },
   {
     role: "college",
     email: "placements@spit-surat.example",
-    pages: ["/college", "/college/cohort", "/college/drives", "@drive", "/college/nudges", "/college/stats", "/college/settings"],
+    pages: ["/college", "/college/cohort", "/college/drives", "@drive", "/college/nudges", "/college/stats", "/college/settings", "/college/verify-domain"],
   },
   {
     role: "mentor",

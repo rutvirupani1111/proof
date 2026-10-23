@@ -147,6 +147,32 @@ For other builders: recruiter/college domain verification can call `createDomain
 "company" | "college" })` and `consumeDomainMagicLink(token)`; links point at `/recruiter/verify-domain`
 and `/college/verify-domain`, which those portals still need to add.
 
+## Student messages, settings, drives; org domain verification; phone tap targets (built)
+
+- **Student messages** (`/student/messages`): thread list (`recruiter/messages/thread-list.tsx`, shared
+  with the recruiter page) + the reusable `ThreadView`. Students reply only; `assertCanMessage`
+  still enforces it server-side, the composer shows why it is locked.
+- **Student settings** (`/student/settings`): account (name; password via Better Auth
+  `changePassword`, other sessions revoked), privacy (visibility radio + open to work), notification
+  categories (`NOTIFICATION_CATEGORIES` in `validation/student.ts`). Muted categories live in
+  `student_profiles.muted_notifications` (migration `0001`) and are filtered out of the bell list and
+  unread count in `getShellNotifications`; they are still stored.
+- **Drive registration** (`/student/jobs#drives`): `server/student/drives.ts` lists the student's
+  college's planned/open drives plus any drive they are on (results stay visible), with each
+  criterion met / not met. `registerForDrive` re-checks eligibility with the placement cell's
+  `eligibilityWhere`, refuses other colleges' drives, flips `eligible` to `registered` (or inserts),
+  and notifies the drive's creator. `drive.eligible` / `drive.selected` notifications link here.
+  Tests: `server/student/drives.test.ts`.
+- **Company / college domain verification**: `server/verify/org-domain-actions.ts`
+  (`requestOrgDomainLink`, `confirmOrgDomain`) over `createDomainMagicLink` / `consumeDomainMagicLink`.
+  The address must be at `companies.domain` / `colleges.domain`. Request buttons on
+  `/recruiter/company` and `/college/settings` (dev link on screen without `RESEND_API_KEY`); landing
+  pages `/recruiter/verify-domain` and `/college/verify-domain` confirm explicitly, then stamp the seal.
+- **Phone tap targets**: below `sm` (`globals.css`) buttons, tabs, selects, inputs and non-inline
+  links get a 40 x 40 px minimum through zero-specificity `:where()`; checkboxes / radios grow to
+  20 px and their wrapping label is the target. `npm run screens` now prints the total under 40 px
+  and treats a label-wrapped toggle as its label.
+
 ## Public site: landing v2, dossier, verify, marketing pages (built)
 
 Server: `src/server/public/` (`queries.ts` dossier + landing reads, `score.ts` wraps
@@ -200,9 +226,9 @@ Components: `src/components/landing/`, `src/components/profile/`; verify-only pi
 | Skill checks | Built. Left: more tasks and languages; plagiarism similarity across submissions. |
 | Credentials | Built, including the public `/verify/[id]` page, paste-JSON verifier and QR. Left: publish the issuer key at a `.well-known` URL, status list for revocation. |
 | Scoring | Built; recomputed on every verification and in the seed. |
-| Student | Built except messages (reuse recruiter `ThreadView`), settings, and drive registration. |
-| Recruiter | Built (see "Recruiter + college" below). Left: real company domain verification (magic link) instead of the pending/verified display, emailed teammate invites, saved-search alerts when new evidence matches. |
-| College | Built (see below). Left: college domain verification flow, drive registration by students (student portal), offer CTC captured as a number for package stats. |
+| Student | Built, including messages (reply-only), settings and drive registration. |
+| Recruiter | Built, including company domain verification by magic link. Left: emailed teammate invites, saved-search alerts when new evidence matches. |
+| College | Built, including college domain verification by magic link; students register for drives themselves. Left: offer CTC captured as a number for package stats. |
 | Mentor | Built. |
 | Public | Built (see "Public site" above). Left: Playwright visual checks of the hero at 375 px, a downloadable credential JSON button, publishing the issuer key for offline verification. |
 | Testing | Vitest engines + scoping tests done. Left: Playwright smoke on port 5191. |

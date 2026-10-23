@@ -8,6 +8,7 @@ import { requireRole } from "@/server/auth/guard";
 import { getCollege } from "@/server/college/queries";
 import { collegeScopeOf } from "@/server/college/scope";
 import { NoCollege } from "../_components/no-college";
+import { RequestOrgDomainLink } from "../../recruiter/_components/org-domain";
 
 export const metadata: Metadata = { title: "College settings" };
 
@@ -42,8 +43,9 @@ export default async function CollegeSettingsPage() {
             <p className="mt-1 text-sm text-muted">
               {verified
                 ? `Verified${college.domainVerifiedAt ? ` ${timeAgo(college.domainVerifiedAt)}` : ""}. Students who sign up with @${college.domain} join your cohort, and recruiters see your drives as coming from a verified placement cell.`
-                : `Pending. Domain verification by magic link to an @${college.domain} address is coming; until then cohort data is visible to you but drives show an "unverified college" label.`}
+                : `Pending. Until it is verified, cohort data is visible to you but drives show an "unverified college" label. Verify by opening a magic link sent to your @${college.domain} address.`}
             </p>
+            {!verified && <RequestOrgDomainLink purpose="college" domain={college.domain} />}
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-subtle">
               <MapPin className="size-3.5" aria-hidden /> {college.shortName} · {college.city}
             </p>

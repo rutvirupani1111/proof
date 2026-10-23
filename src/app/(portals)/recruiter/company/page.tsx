@@ -10,6 +10,7 @@ import { requireRole } from "@/server/auth/guard";
 import { getCompanyWorkspace } from "@/server/recruiter/queries";
 import { recruiterScopeOf } from "@/server/recruiter/scope";
 import { NoWorkspace } from "../_components/no-workspace";
+import { RequestOrgDomainLink } from "../_components/org-domain";
 import { InviteTeammate } from "./invite-teammate";
 
 export const metadata: Metadata = { title: "Company workspace" };
@@ -51,9 +52,12 @@ export default async function CompanyPage() {
                     Verified{company.domainVerifiedAt ? ` ${timeAgo(company.domainVerifiedAt)}` : ""}. Candidates see your messages and invites as coming from a verified company.
                   </p>
                 ) : (
-                  <p className="mt-1 text-sm text-muted">
-                    Pending. Until your domain is verified, candidates see an “unverified company” label on messages and skill-check invites. Domain verification by magic link to an @{company.domain} address is coming; your Proof admin can verify you meanwhile.
-                  </p>
+                  <>
+                    <p className="mt-1 text-sm text-muted">
+                      Pending. Until your domain is verified, candidates see an “unverified company” label on messages and skill-check invites. Verify by opening a magic link sent to your @{company.domain} address.
+                    </p>
+                    <RequestOrgDomainLink purpose="company" domain={company.domain} />
+                  </>
                 )}
               </div>
             </div>

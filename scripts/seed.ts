@@ -4,13 +4,16 @@
  *   npm run db:seed                      # local PGlite (stop the dev server first)
  *   PROOF_SEED_REMOTE=1 npm run db:seed  # against DATABASE_URL (the deployed showcase)
  *
- * Scores here are demo values computed with a simple formula; the scoring engine will
- * recompute them from evidence once it exists.
+ * After the evidence is inserted, every verified evidence row gets a signed W3C credential
+ * (src/server/credentials) and every student's Proof Score is recomputed by the real engine
+ * (src/server/scoring), so seeded scores are exactly what the product would compute.
  */
 import { hashPassword } from "better-auth/crypto";
 import { sql } from "drizzle-orm";
 import { closeDb, getDb, usingPglite } from "../src/db";
 import * as s from "../src/db/schema";
+import { issueCredential } from "../src/server/credentials";
+import { recomputeProofScore } from "../src/server/scoring";
 import {
   ARCHETYPES,
   BRANCHES,
@@ -428,8 +431,24 @@ async function main() {
   await db.insert(s.deployments).values(deployRows);
   await db.insert(s.checkAttempts).values(attemptRows);
   await db.insert(s.attestations).values(attestRows);
-  await db.insert(s.evidence).values(evidenceRows);
+  const insertedEvidence = await db.insert(s.evidence).values(evidenceRows).returning();
   await db.insert(s.profileSkills).values(psRows);
+
+  // ---------------------------------------------------------------- credentials + real scores
+  for (const ev of insertedEvidence) {
+    if (ev.status !== "verified") continue;
+    await issueCredential({
+      userId: ev.userId,
+      type: ev.kind,
+      evidenceId: ev.id,
+      claim: { title: ev.title, ...(ev.summary ? { summary: ev.summary } : {}), skills: ev.skillSlugs, ...ev.data },
+    });
+  }
+  for (const st of students) {
+    const result = await recomputeProofScore(st.id, new Date(NOW));
+    scoreByStudent[st.id] = result.overall;
+  }
+  console.log(`Issued ${insertedEvidence.length} credentials; ${students[0]!.name} scores ${scoreByStudent[students[0]!.id]}.`);
 
   // ---------------------------------------------------------------- hiring
   const jobDefs: { company: CompanyKey; by?: string; title: string; type: "full_time" | "internship"; mode: "onsite" | "hybrid" | "remote"; loc: string; min: number; max: number; skills: [string, number][]; minScore: number }[] = [

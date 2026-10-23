@@ -41,16 +41,16 @@ export const NAV: Record<Portal, NavSection[]> = {
     {
       title: "Evidence",
       items: [
-        { label: "Proofs hub", href: "/student/proofs", icon: BadgeCheck, soon: true },
-        { label: "Skill checks", href: "/student/checks", icon: Code2, soon: true },
-        { label: "Profile", href: "/student/profile", icon: UserRound, soon: true },
+        { label: "Proofs hub", href: "/student/proofs", icon: BadgeCheck },
+        { label: "Skill checks", href: "/student/checks", icon: Code2 },
+        { label: "Profile", href: "/student/profile", icon: UserRound },
       ],
     },
     {
       title: "Hiring",
       items: [
-        { label: "Jobs", href: "/student/jobs", icon: Briefcase, soon: true },
-        { label: "Applications", href: "/student/applications", icon: ClipboardList, soon: true },
+        { label: "Jobs", href: "/student/jobs", icon: Briefcase },
+        { label: "Applications", href: "/student/applications", icon: ClipboardList },
         { label: "Messages", href: "/student/messages", icon: MessageSquare, soon: true },
       ],
     },
@@ -93,11 +93,11 @@ export const NAV: Record<Portal, NavSection[]> = {
     {
       title: "Endorsements",
       items: [
-        { label: "Requests", href: "/mentor/requests", icon: Inbox, soon: true },
-        { label: "Given", href: "/mentor/endorsements", icon: Award, soon: true },
+        { label: "Requests", href: "/mentor/requests", icon: Inbox },
+        { label: "Given", href: "/mentor/endorsements", icon: Award },
       ],
     },
-    { items: [{ label: "Domain & profile", href: "/mentor/settings", icon: Settings, soon: true }] },
+    { items: [{ label: "Domain & profile", href: "/mentor/settings", icon: Settings }] },
   ],
 };
 

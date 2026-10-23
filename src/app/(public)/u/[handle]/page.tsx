@@ -7,7 +7,9 @@ import { EvidenceCard } from "@/components/profile/evidence-card";
 import { KIND_META, KIND_ORDER } from "@/components/profile/kind-meta";
 import { ScoreBreakdownPanel } from "@/components/profile/score-breakdown";
 import { ScoreRing } from "@/components/profile/score-ring";
-import { SharePanel } from "@/components/profile/share-panel";
+import { PassArrival } from "@/components/profile/pass/pass-arrival";
+import { ProofPass } from "@/components/profile/pass/proof-pass";
+import { buildPassQr, renderPassQrSvg } from "@/components/profile/pass/qr";
 import { SkillConstellation } from "@/components/profile/skill-constellation";
 import { WorkTimeline } from "@/components/profile/work-timeline";
 import { Avatar } from "@/components/ui/avatar";
@@ -18,7 +20,7 @@ import { Seal } from "@/components/ui/seal";
 import { SealGlyph } from "@/components/ui/seal-glyph";
 import { getCurrentUser } from "@/server/auth/guard";
 import { getDossier, getShareCard } from "@/server/public/queries";
-import { getOrigin, qrSvg } from "@/server/public/site";
+import { getOrigin } from "@/server/public/site";
 
 export const dynamic = "force-dynamic";
 
@@ -64,12 +66,14 @@ export default async function DossierPage({ params }: Props) {
   const { profile, score, skills, evidence, timeline, sealCount, credentialCount, isOwner } = result;
   const origin = await getOrigin();
   const url = `${origin}/u/${profile.handle}`;
-  const qr = await qrSvg(url);
+  const passUrl = `${url}?via=pass`;
+  const passQr = renderPassQrSvg(buildPassQr(passUrl), { id: "pp", animate: true });
   const skillNames = new Map(skills.map((s) => [s.slug, s.name]));
   const kindCounts = KIND_ORDER.map((k) => ({ kind: k, n: evidence.filter((e) => e.kind === k).length })).filter((k) => k.n > 0);
 
   return (
     <main className="pb-24">
+      <PassArrival handle={profile.handle} sealCount={sealCount} />
       {isOwner && profile.visibility !== "public" && (
         <div className="border-b border-line bg-violet-soft/60 text-sm">
           <p className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2.5 text-violet-text sm:px-6">
@@ -235,10 +239,23 @@ export default async function DossierPage({ params }: Props) {
                 <p className="mt-3 text-sm leading-relaxed text-pretty">{profile.about}</p>
               </div>
             )}
-            <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-card">
-              <p className="mb-4 font-mono text-[11px] tracking-[0.14em] text-subtle uppercase">Share</p>
-              <SharePanel url={url} qr={qr} title={`${profile.name} on Proof`} />
-            </div>
+            <section aria-labelledby="pass-h" className="grid gap-3">
+              <p id="pass-h" className="font-mono text-[11px] tracking-[0.14em] text-subtle uppercase">
+                Proof Pass · share
+              </p>
+              <ProofPass
+                name={profile.name}
+                handle={profile.handle}
+                score={score.overall}
+                sealCount={sealCount}
+                skills={skills.slice(0, 3).map((s) => s.name)}
+                college={profile.college?.shortName ?? profile.college?.name ?? null}
+                url={url}
+                passUrl={passUrl}
+                qrSvg={passQr}
+                passImage={profile.visibility === "public" ? `/u/${profile.handle}/pass` : null}
+              />
+            </section>
           </aside>
         </div>
       </div>

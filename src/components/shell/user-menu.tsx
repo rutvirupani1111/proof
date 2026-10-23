@@ -41,7 +41,7 @@ export function UserMenu({ user, variant }: { user: ShellUser; variant: "sidebar
           <ChevronsUpDown className="size-4 text-subtle" aria-hidden />
         </DropdownMenuTrigger>
       ) : (
-        <DropdownMenuTrigger className="rounded-full lg:hidden" aria-label="Account menu">
+        <DropdownMenuTrigger className="grid size-10 place-items-center rounded-full lg:hidden" aria-label="Account menu">
           <Avatar name={user.name} src={user.image} size="sm" />
         </DropdownMenuTrigger>
       )}

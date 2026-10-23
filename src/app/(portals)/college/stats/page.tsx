@@ -55,7 +55,36 @@ export default async function StatsPage() {
             <CardDescription>Placement rate per group, with the average Proof Score.</CardDescription>
           </CardHeader>
           <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[26rem] text-sm">
+            {/* Phones: one card per group instead of a five-column table. */}
+            <ul className="grid gap-2 sm:hidden" aria-label="Placements by branch and graduation year">
+              {s.byGroup.map((g) => (
+                <li key={`${g.branch}-${g.year}`} className="grid gap-2 rounded-xl border border-line bg-surface-2/50 p-3 text-sm">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 font-medium">{g.branch}</span>
+                    <span className="shrink-0 font-mono text-xs text-muted">{g.year ?? "n/a"}</span>
+                  </div>
+                  <span className="flex items-center gap-2">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3" aria-hidden>
+                      <span className={cn("block h-full rounded-full", g.rate >= 0.5 ? "bg-lime" : "bg-violet")} style={{ width: `${g.rate * 100}%` }} />
+                    </span>
+                    <span className="font-mono text-xs tabular">{Math.round(g.rate * 100)}%</span>
+                  </span>
+                  <dl className="flex justify-between gap-3 font-mono text-xs text-muted tabular">
+                    <div className="flex gap-1.5">
+                      <dt>Placed</dt>
+                      <dd className="text-ink">
+                        {g.placed}/{g.students}
+                      </dd>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <dt>Avg score</dt>
+                      <dd className="text-ink">{g.avgScore}</dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+            <table className="hidden w-full min-w-[26rem] text-sm sm:table">
               <caption className="sr-only">Placements by branch and graduation year</caption>
               <thead>
                 <tr className="border-b border-line text-left font-mono text-[11px] tracking-wider text-subtle uppercase">

@@ -7,7 +7,7 @@ export function Logo({ href = "/", className }: { href?: string; className?: str
   return (
     <Link
       href={href}
-      className={cn("group inline-flex items-center gap-2 rounded-lg font-display text-lg font-bold tracking-tight", className)}
+      className={cn("group inline-flex min-h-10 items-center gap-2 rounded-lg font-display text-lg font-bold tracking-tight", className)}
       aria-label="Proof home"
     >
       <SealGlyph className="size-6 text-lime transition-transform duration-300 group-hover:-rotate-12" />

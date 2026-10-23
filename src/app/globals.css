@@ -152,7 +152,16 @@
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
   }
+  /*
+   * Responsive guard rails. Grid items may shrink below their min-content width (otherwise one
+   * long row widens a single-column mobile grid past the viewport), and long tokens such as
+   * handles, hashes and URLs wrap instead of pushing the page sideways.
+   */
+  .grid > * {
+    min-width: 0;
+  }
   body {
+    overflow-wrap: break-word;
     background: var(--canvas);
     color: var(--ink);
     font-family: var(--font-sans);

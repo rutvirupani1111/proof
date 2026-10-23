@@ -31,7 +31,7 @@ export function NotificationsBell({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="relative grid size-9 place-items-center rounded-xl text-muted transition-colors hover:bg-surface-2 hover:text-ink data-[state=open]:bg-surface-2"
+        className="relative grid size-10 place-items-center sm:size-9 rounded-xl text-muted transition-colors hover:bg-surface-2 hover:text-ink data-[state=open]:bg-surface-2"
         aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
       >
         <Bell className="size-[18px]" />

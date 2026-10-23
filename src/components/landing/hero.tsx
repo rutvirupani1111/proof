@@ -4,37 +4,33 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useReducedMotionPref } from "@/components/motion/use-reduced-motion-pref";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { rosettePath, SealGlyph } from "@/components/ui/seal-glyph";
+import type { Exclusion } from "./hero-canvas";
 
 // The 3D scene is its own chunk, fetched after first paint and only when it will actually run.
 const HeroCanvas = dynamic(() => import("./hero-canvas"), { ssr: false });
 
 const CLAIM_COUNT = 14;
 
-const RM_QUERY = "(prefers-reduced-motion: reduce)";
-function subscribeReducedMotion(cb: () => void) {
-  const mq = window.matchMedia(RM_QUERY);
-  mq.addEventListener("change", cb);
-  return () => mq.removeEventListener("change", cb);
-}
-/**
- * Reduced-motion preference that is `false` during SSR AND hydration, then the real value: the
- * hero swaps whole layouts on it, so it must never mismatch the server HTML.
- */
-function useReducedMotionPref() {
-  return useSyncExternalStore(subscribeReducedMotion, () => window.matchMedia(RM_QUERY).matches, () => false);
-}
+/** Phones get the static hero: copy first, constellation below, no scroll runway. */
+const PHONE_QUERY = "(max-width: 639px)";
 
 /**
  * Landing hero. The headline is plain server-rendered HTML (it is the LCP element); the R3F
  * scene loads lazily behind it. Scrolling the 220svh runway drives the claims-to-seals collapse.
- * Reduced motion, Save-Data or no WebGL: a static constellation of seals instead, no runway.
+ * Phones, reduced motion, Save-Data or no WebGL: a static constellation of seals instead, no runway.
+ * The copy block is measured and handed to the scene as an exclusion zone, so no claim card or
+ * seal ever sits under the headline, paragraph or buttons at any width.
  */
 export function Hero({ featured }: { featured?: ReactNode }) {
   const ref = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
+  const [exclude, setExclude] = useState<Exclusion | null>(null);
   const reduce = useReducedMotionPref();
   const { resolved } = useTheme();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
@@ -55,10 +51,44 @@ export function Hero({ featured }: { featured?: ReactNode }) {
       } catch {
         gl = false;
       }
-      setMode(!conn?.saveData && gl ? "3d" : "static");
+      const phone = window.matchMedia(PHONE_QUERY).matches;
+      setMode(!phone && !conn?.saveData && gl ? "3d" : "static");
     });
     return () => cancel(handle);
   }, [reduce]);
+
+  useEffect(() => {
+    if (mode !== "3d") return;
+    const stage = stageRef.current;
+    const copy = copyRef.current;
+    if (!stage || !copy) return;
+    const measure = () => {
+      const st = stage.getBoundingClientRect();
+      const kids = Array.from(copy.children).map((k) => k.getBoundingClientRect()).filter((r) => r.height > 0);
+      if (!kids.length || !st.width || !st.height) return;
+      const box = copy.getBoundingClientRect();
+      const cs = getComputedStyle(copy);
+      const left = box.left + parseFloat(cs.paddingLeft);
+      const right = box.right - parseFloat(cs.paddingRight);
+      const top = Math.min(...kids.map((r) => r.top));
+      const bottom = Math.max(...kids.map((r) => r.bottom));
+      const round = (v: number) => Math.round(v * 1000) / 1000;
+      const next: Exclusion = {
+        x0: round((left - st.left) / st.width - 0.5),
+        x1: round((right - st.left) / st.width - 0.5),
+        y0: round(0.5 - (bottom - st.top) / st.height),
+        y1: round(0.5 - (top - st.top) / st.height),
+      };
+      setExclude((prev) =>
+        prev && prev.x0 === next.x0 && prev.x1 === next.x1 && prev.y0 === next.y0 && prev.y1 === next.y1 ? prev : next,
+      );
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    ro.observe(copy);
+    return () => ro.disconnect();
+  }, [mode]);
 
   useEffect(() => {
     const el = ref.current;
@@ -77,16 +107,17 @@ export function Hero({ featured }: { featured?: ReactNode }) {
 
   return (
     <section ref={ref} className={showStatic ? "relative" : "relative h-[220svh]"} aria-label="Introduction">
-      <div className={showStatic ? "relative" : "sticky top-0 h-svh overflow-hidden"}>
+      <div ref={stageRef} className={showStatic ? "relative" : "sticky top-0 h-svh overflow-hidden"}>
         <div className="absolute inset-0 bg-dots opacity-60 [mask-image:radial-gradient(70%_60%_at_60%_30%,black,transparent)]" aria-hidden />
         {mode === "3d" && !reduce && (
           <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
-            <HeroCanvas progress={scrollYProgress} dark={resolved === "dark"} active={visible} />
+            <HeroCanvas progress={scrollYProgress} dark={resolved === "dark"} active={visible} exclude={exclude} />
           </motion.div>
         )}
 
         <div className={showStatic ? "relative mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:pt-20" : "relative mx-auto h-full max-w-6xl px-4 sm:px-6"}>
           <div
+            ref={copyRef}
             className={
               showStatic
                 ? "relative"

@@ -135,21 +135,88 @@ function sealTexture() {
 
 type Layout = { start: THREE.Vector3[]; tilt: number[]; end: THREE.Vector3[]; sealSize: number; paperScale: number };
 
-function computeLayout(w: number, h: number): Layout {
+/**
+ * The hero copy (badge, headline, paragraph, buttons) in viewport-normalised coordinates
+ * (x left to right, y bottom to top, both -0.5..0.5). No claim card or seal may sit inside it.
+ */
+export type Exclusion = { x0: number; x1: number; y0: number; y1: number };
+
+const CAM_Z = 12;
+const PAPER_W = 3.2;
+const PAPER_H = 1;
+// Breathing room around the copy; also absorbs the idle float and the pointer parallax.
+const PAD_X = 0.03;
+const PAD_Y = 0.035;
+
+/**
+ * Moves a card whose projected box overlaps the exclusion to the nearest free side (right, left,
+ * below, above). Cards may bleed off the screen edge, as the scatter already does; a card with
+ * no free side starts off-screen right and flies in.
+ */
+function clearOfCopy(ex: Exclusion, sx: number, sy: number, hw: number, hh: number): [number, number] {
+  const ox0 = ex.x0 - PAD_X - hw;
+  const ox1 = ex.x1 + PAD_X + hw;
+  const oy0 = ex.y0 - PAD_Y - hh;
+  const oy1 = ex.y1 + PAD_Y + hh;
+  if (sx <= ox0 || sx >= ox1 || sy <= oy0 || sy >= oy1) return [sx, sy];
+  const fitsX = (x: number) => x - hw * 0.6 >= -0.5 && x + hw * 0.6 <= 0.5;
+  const fitsY = (y: number) => y - hh * 0.5 >= -0.5 && y + hh * 0.5 <= 0.5;
+  const options: [number, number][] = [];
+  if (fitsX(ox1)) options.push([ox1, sy]);
+  if (fitsX(ox0)) options.push([ox0, sy]);
+  if (fitsY(oy0)) options.push([sx, oy0]);
+  if (fitsY(oy1)) options.push([sx, oy1]);
+  if (!options.length) return [0.5 + hw * 1.2, sy];
+  let best = options[0]!;
+  for (const o of options) if (Math.hypot(o[0] - sx, o[1] - sy) < Math.hypot(best[0] - sx, best[1] - sy)) best = o;
+  return best;
+}
+
+function computeLayout(w: number, h: number, ex: Exclusion | null): Layout {
   const tall = w / h < 0.9;
   const scatter = tall ? SCATTER_TALL : SCATTER_WIDE;
-  const center = tall ? new THREE.Vector2(0, -h * 0.27) : new THREE.Vector2(w * 0.24, -h * 0.02);
-  const half = tall ? new THREE.Vector2(w * 0.4, h * 0.17) : new THREE.Vector2(Math.min(w * 0.2, h * 0.45), h * 0.33);
+  const paperScale = tall ? Math.min(0.62, w * 0.17) : Math.min(1, w * 0.075);
+  const sealSize = tall ? Math.min(0.62, w * 0.11) : Math.min(0.85, h * 0.085);
+
+  let center = tall ? new THREE.Vector2(0, -h * 0.27) : new THREE.Vector2(w * 0.24, -h * 0.02);
+  let half = tall ? new THREE.Vector2(w * 0.4, h * 0.17) : new THREE.Vector2(Math.min(w * 0.2, h * 0.45), h * 0.33);
+  if (ex) {
+    // The constellation settles in the free space beside (wide) or below (tall) the copy.
+    const sealX = sealSize / w + 0.02;
+    const sealY = sealSize / h + 0.02;
+    if (tall) {
+      const top = ex.y0 - PAD_Y;
+      center = new THREE.Vector2(0, ((top - 0.47) / 2) * h);
+      half = new THREE.Vector2(w * 0.4, Math.max(0.05, Math.min(0.17, (top + 0.47) / 2 - sealY)) * h);
+    } else {
+      const left = ex.x1 + PAD_X;
+      center = new THREE.Vector2(((left + 0.5) / 2) * w, -h * 0.02);
+      half = new THREE.Vector2(Math.min(Math.max(0.06, (0.5 - left) / 2 - sealX) * w, h * 0.45), h * 0.33);
+    }
+  }
+
+  const start = scatter.map(([x, y, z, tilt]) => {
+    if (!ex) return new THREE.Vector3(x * w, y * h, z);
+    // Project onto the screen, clear the copy there, then un-project at the same depth.
+    const f = CAM_Z / (CAM_Z - z);
+    const c = Math.abs(Math.cos(tilt));
+    const s = Math.abs(Math.sin(tilt));
+    const hwWorld = ((PAPER_W * c + PAPER_H * s) * paperScale) / 2;
+    const hhWorld = ((PAPER_W * s + PAPER_H * c) * paperScale) / 2;
+    const [sx, sy] = clearOfCopy(ex, x * f, y * f, (hwWorld * f) / w, (hhWorld * f) / h);
+    return new THREE.Vector3((sx / f) * w, (sy / f) * h, z);
+  });
+
   return {
-    start: scatter.map(([x, y, z]) => new THREE.Vector3(x * w, y * h, z)),
+    start,
     tilt: scatter.map(([, , , t]) => t),
     end: STARS.map(([x, y]) => new THREE.Vector3(center.x + x * half.x, center.y + y * half.y, 0.5)),
-    sealSize: tall ? Math.min(0.62, w * 0.11) : Math.min(0.85, h * 0.085),
-    paperScale: tall ? Math.min(0.62, w * 0.17) : Math.min(1, w * 0.075),
+    sealSize,
+    paperScale,
   };
 }
 
-function Scene({ progress, dark }: { progress: MotionValue<number>; dark: boolean }) {
+function Scene({ progress, dark, exclude }: { progress: MotionValue<number>; dark: boolean; exclude: Exclusion | null }) {
   const { viewport, size } = useThree();
   const items = useRef<(THREE.Group | null)[]>([]);
   const papers = useRef<(THREE.Mesh | null)[]>([]);
@@ -162,7 +229,7 @@ function Scene({ progress, dark }: { progress: MotionValue<number>; dark: boolea
 
   const w = viewport.width;
   const h = viewport.height;
-  const layout = useMemo(() => computeLayout(w, h), [w, h]);
+  const layout = useMemo(() => computeLayout(w, h, exclude), [w, h, exclude]);
 
   // Redraw once webfonts are ready so claims render in Bricolage, not the fallback.
   const [fontsReady, setFontsReady] = useState(false);
@@ -318,17 +385,27 @@ function Scene({ progress, dark }: { progress: MotionValue<number>; dark: boolea
   );
 }
 
-export default function HeroCanvas({ progress, dark, active }: { progress: MotionValue<number>; dark: boolean; active: boolean }) {
+export default function HeroCanvas({
+  progress,
+  dark,
+  active,
+  exclude,
+}: {
+  progress: MotionValue<number>;
+  dark: boolean;
+  active: boolean;
+  exclude: Exclusion | null;
+}) {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ position: [0, 0, 12], fov: 40 }}
+      camera={{ position: [0, 0, CAM_Z], fov: 40 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       frameloop={active ? "always" : "never"}
       aria-hidden
       style={{ position: "absolute", inset: 0 }}
     >
-      <Scene progress={progress} dark={dark} />
+      <Scene progress={progress} dark={dark} exclude={exclude} />
     </Canvas>
   );
 }

@@ -4,6 +4,7 @@ import { motion, useAnimate, useReducedMotion } from "motion/react";
 import { useCallback, useId } from "react";
 import { cn } from "@/lib/utils";
 import { springs } from "@/components/motion/transitions";
+import { useReducedMotionPref } from "@/components/motion/use-reduced-motion-pref";
 import { rosettePath } from "./seal-glyph";
 
 export { SealGlyph } from "./seal-glyph";
@@ -21,6 +22,8 @@ export type SealProps = {
   onLand?: () => void;
   delay?: number;
   className?: string;
+  /** Scale the stamp drops in from. Lower it where the seal sits near a clipping edge. */
+  stampFrom?: number;
   title?: string;
 };
 
@@ -37,9 +40,11 @@ export function Seal({
   delay = 0,
   className,
   title = "Verified",
+  stampFrom = 2.4,
 }: SealProps) {
   const pathId = useId();
-  const reduce = useReducedMotion();
+  // Hydration-safe: the stamp markup differs with the preference, so it must match the server first.
+  const reduce = useReducedMotionPref();
   const animated = stamp && !reduce;
 
   const target = { scale: 1, opacity: 1, rotate: -8 };
@@ -63,12 +68,13 @@ export function Seal({
         />
       )}
       <motion.svg
+        key={animated ? "stamp" : "still"}
         viewBox="0 0 100 100"
         width={size}
         height={size}
         role="img"
         aria-label={title}
-        initial={animated ? { scale: 2.4, opacity: 0, rotate: -32 } : { rotate: -8 }}
+        initial={animated ? { scale: stampFrom, opacity: 0, rotate: -32 } : { rotate: -8 }}
         {...trigger}
         transition={{ ...springs.stamp, delay, opacity: { duration: 0.12, delay } }}
         onAnimationComplete={() => onLand?.()}

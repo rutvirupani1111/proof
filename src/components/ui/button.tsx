@@ -27,10 +27,10 @@ export const buttonVariants = cva(
         link: "h-auto px-0 text-violet-text underline-offset-4 hover:underline",
       },
       size: {
-        sm: "h-8 rounded-lg px-3 text-[13px] [&_svg]:size-3.5",
+        sm: "h-10 rounded-lg px-3 text-[13px] sm:h-8 [&_svg]:size-3.5",
         md: "h-10 rounded-xl px-4 text-sm [&_svg]:size-4",
         lg: "h-12 rounded-2xl px-6 text-[15px] [&_svg]:size-[18px]",
-        icon: "size-9 rounded-xl [&_svg]:size-[18px]",
+        icon: "size-10 rounded-xl sm:size-9 [&_svg]:size-[18px]",
       },
     },
     compoundVariants: [{ variant: "link", className: "h-auto px-0" }],

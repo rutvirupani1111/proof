@@ -49,7 +49,7 @@ function SidebarNav({ portal, onNavigate }: { portal: Portal; onNavigate?: () =>
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group relative flex h-9 items-center gap-2.5 rounded-xl px-3 text-sm font-medium transition-colors",
+                  "group relative flex h-10 items-center gap-2.5 rounded-xl lg:h-9 px-3 text-sm font-medium transition-colors",
                   active ? "bg-surface text-ink shadow-card ring-1 ring-line" : "text-muted hover:bg-surface-2 hover:text-ink",
                 )}
               >
@@ -113,7 +113,7 @@ export function AppShell({ portal, user, notifications, unreadCount, children }:
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-ink lg:hidden"
+            className="grid size-10 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-ink lg:hidden"
             aria-label="Open navigation"
           >
             <Menu className="size-5" />
@@ -123,7 +123,7 @@ export function AppShell({ portal, user, notifications, unreadCount, children }:
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="ml-auto flex h-9 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm text-subtle transition-colors hover:border-line-strong hover:text-muted sm:w-72 lg:ml-0"
+            className="ml-auto flex h-10 min-w-10 items-center justify-center gap-2 sm:h-9 sm:justify-start rounded-xl border border-line bg-surface px-3 text-sm text-subtle transition-colors hover:border-line-strong hover:text-muted sm:w-72 lg:ml-0"
             aria-label="Open command palette"
           >
             <Search className="size-4" />

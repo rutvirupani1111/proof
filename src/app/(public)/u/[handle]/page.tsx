@@ -128,10 +128,11 @@ export default async function DossierPage({ params }: Props) {
             </ul>
           </FadeIn>
 
-          <FadeIn delay={0.1} className="flex items-center gap-5 sm:gap-7">
+          <FadeIn delay={0.1} className="flex items-center gap-5 sm:gap-7 lg:pr-3">
             <ScoreRing score={score.overall} size={128} />
-            <div className="flex flex-col items-center">
-              <Seal size={96} stamp="mount" delay={0.5} label={`${sealCount} seals · verified ·`} title={`${sealCount} verified evidence items`} />
+            <div className="flex shrink-0 flex-col items-center">
+              {/* Drops in from 1.5x (not the default 2.4x) so the stamp stays inside the header at every width. */}
+              <Seal size={96} stamp="mount" stampFrom={1.5} delay={0.5} label={`${sealCount} seals · verified ·`} title={`${sealCount} verified evidence items`} />
               <p className="mt-2 text-center">
                 <span className="font-display text-2xl font-semibold tabular">{sealCount}</span>{" "}
                 <span className="text-sm text-muted">{sealCount === 1 ? "seal" : "seals"}</span>

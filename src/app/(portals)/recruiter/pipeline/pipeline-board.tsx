@@ -204,8 +204,8 @@ export function PipelineBoard({ initial }: { initial: BoardCard[] }) {
         },
       }}
     >
-      <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-        <div className="flex snap-x snap-mandatory gap-3 sm:snap-none">
+      <div className="-mx-4 snap-x snap-mandatory scroll-px-4 overflow-x-auto overscroll-x-contain px-4 pb-4 sm:-mx-6 sm:snap-none sm:px-6 lg:-mx-10 lg:px-10">
+        <div className="flex gap-3">
           {PIPELINE_STAGES.map((stage) => (
             <Column key={stage} stage={stage} cards={cols[stage]} onMove={moveTo} onRemove={remove} />
           ))}
@@ -288,7 +288,7 @@ function SortableCard({
             {...listeners}
             aria-label={`Drag ${card.name}`}
             aria-roledescription="draggable candidate"
-            className="grid size-7 shrink-0 cursor-grab touch-none place-items-center rounded-md text-subtle hover:bg-surface-2 hover:text-ink active:cursor-grabbing"
+            className="grid size-10 shrink-0 cursor-grab touch-none sm:size-7 place-items-center rounded-md text-subtle hover:bg-surface-2 hover:text-ink active:cursor-grabbing"
           >
             <GripVertical className="size-4" />
           </button>

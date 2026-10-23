@@ -1,6 +1,13 @@
 # Build status
 
-Last updated: 2026-10-23 (foundation, engines, all four portals, public site).
+Last updated: 2026-10-24 (foundation, engines, all four portals, public site, production deploy).
+
+**Live:** https://proof-pink-eta.vercel.app (Vercel `proof` + Neon `proof-db`, seeded demo).
+Demo logins (password `proof-demo-2026` for all): student `ishita@spit-surat.example`, recruiter
+`meera@kitecode.example`, placement cell `placements@spit-surat.example`, mentor
+`anand.mehta@spit-surat.example`, admin `admin@proof.example`. Full table in the README.
+Smoke-tested 2026-10-24: `/`, `/login`, `/u/ishita-varma`, `/verify`, `/for-recruiters`, `/pricing`
+return 200; email sign-in as the demo student succeeds and `/student` returns 200.
 
 ## Done (foundation)
 
@@ -199,7 +206,7 @@ Components: `src/components/landing/`, `src/components/profile/`; verify-only pi
 | Mentor | Built. |
 | Public | Built (see "Public site" above). Left: Playwright visual checks of the hero at 375 px, a downloadable credential JSON button, publishing the issuer key for offline verification. |
 | Testing | Vitest engines + scoping tests done. Left: Playwright smoke on port 5191. |
-| Deploy | Vercel project `proof` + Neon; set `DATABASE_URL`; `vercel-build` migrates; seed showcase with `PROOF_SEED_REMOTE=1`. |
+| Deploy | Live at https://proof-pink-eta.vercel.app. `vercel-build` runs `scripts/db-deploy.mjs` (migrate, seed once when `SEED_DEMO=true` and no users). Left: connect the GitHub repo for push-to-deploy, set `BETTER_AUTH_SECRET` in Vercel env. |
 
 ## Known caveats
 

@@ -7,6 +7,9 @@ skill checks and mentor endorsements; recruiters search the evidence; colleges s
 job-ready. Product spec: [`SPEC.md`](SPEC.md). Architecture and conventions:
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Build state: [`docs/STATUS.md`](docs/STATUS.md).
 
+**Live demo: https://proof-pink-eta.vercel.app** (fictional seeded showcase; sign in with any
+account under [Demo logins](#demo-logins), password `proof-demo-2026`).
+
 ## Run locally
 
 Requires Node 20.9+ and npm. No environment variables or API keys needed.
@@ -41,9 +44,13 @@ All people, colleges and companies in the seed are fictional. Domains use the re
 
 ## Production
 
-Vercel project `proof` + Neon Postgres. Set `DATABASE_URL`; everything else is optional
-(`BETTER_AUTH_SECRET` falls back to a generated secret stored in the database). The
-`vercel-build` script runs migrations before `next build`. Seed the showcase once with
+Live at **https://proof-pink-eta.vercel.app** (Vercel project `proof`, Neon Postgres `proof-db`).
+`DATABASE_URL` comes from the Neon integration; everything else is optional
+(`BETTER_AUTH_SECRET` falls back to a generated secret stored in the database, and the Better
+Auth base URL resolves from the Vercel host). The `vercel-build` script runs
+`scripts/db-deploy.mjs` before `next build`: it applies migrations and, because
+`.env.production` sets `SEED_DEMO=true`, seeds the demo showcase once while the database has no
+users. Deploy with `vercel deploy --prod` (remote build). To reseed by hand:
 `PROOF_SEED_REMOTE=1 DATABASE_URL=... npm run db:seed`.
 
 ## Ports

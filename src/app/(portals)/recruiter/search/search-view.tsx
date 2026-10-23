@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { springs } from "@/components/motion/transitions";
+import { TalentChips } from "@/components/recruiter/talent-chips";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import type { SearchFiltersInput, SearchSort } from "@/lib/validation/recruiter"
 import { deleteSavedSearchAction, saveSearchAction } from "@/server/recruiter/actions";
 import { searchCandidatesAction } from "@/server/search/actions";
 import type { CandidateHit, SearchFacets, SearchResult } from "@/server/search/engine";
+import { mergeFilters, parseTalentQuery, removeChip, type TalentVocab } from "@/server/search/talent-query";
 import { EvidenceFacts } from "../_components/evidence-facts";
 import { ScoreRing } from "../_components/score-ring";
 
@@ -70,13 +72,21 @@ export function SearchView({
   initial,
   saved: initialSaved,
   canSave,
+  railFilters,
+  initialText = "",
 }: {
   facets: SearchFacets;
   initial: SearchResult;
   saved: Saved[];
   canSave: boolean;
+  /** Filters set from the rail or a saved search (the URL's `f`). */
+  railFilters: SearchFiltersInput;
+  /** Plain-English query (the URL's `t`), parsed into filters on top of the rail. */
+  initialText?: string;
 }) {
-  const [filters, setFilters] = useState<SearchFiltersInput>(initial.filters);
+  // `filters` are the rail's; `text` is the plain-English box. The search runs on both merged.
+  const [filters, setFilters] = useState<SearchFiltersInput>(railFilters);
+  const [text, setText] = useState(initialText);
   const [result, setResult] = useState<SearchResult>(initial);
   const [pending, startTransition] = useTransition();
   const [compare, setCompare] = useState<CandidateHit[]>([]);
@@ -87,6 +97,11 @@ export function SearchView({
   const first = useRef(true);
 
   const patch = useCallback((p: Partial<SearchFiltersInput>) => setFilters((f) => ({ ...f, ...p })), []);
+  const vocab = useMemo<TalentVocab>(() => ({ skills: facets.skills, colleges: facets.colleges }), [facets.skills, facets.colleges]);
+  const parsed = useMemo(() => parseTalentQuery(text, vocab), [text, vocab]);
+  const effective = useMemo(() => mergeFilters(filters, parsed.filters), [filters, parsed.filters]);
+  const effectiveKey = JSON.stringify(effective);
+  const urlKey = JSON.stringify([filters, text.trim()]);
 
   // Re-run the search whenever filters settle (debounced for typing). Stale responses are dropped.
   useEffect(() => {
@@ -96,22 +111,26 @@ export function SearchView({
     }
     const handle = window.setTimeout(() => {
       const id = ++reqId.current;
-      const qs = activeCount(filters) || filters.q || filters.sort ? `?f=${encodeURIComponent(JSON.stringify(filters))}` : "";
-      window.history.replaceState(null, "", `/recruiter/search${qs}`);
+      const [rail, nl] = JSON.parse(urlKey) as [SearchFiltersInput, string];
+      const params = new URLSearchParams();
+      if (activeCount(rail) || rail.q || rail.sort) params.set("f", JSON.stringify(rail));
+      if (nl) params.set("t", nl);
+      const qs = params.toString();
+      window.history.replaceState(null, "", `/recruiter/search${qs ? `?${qs}` : ""}`);
       startTransition(async () => {
-        const res = await searchCandidatesAction(filters);
+        const res = await searchCandidatesAction(JSON.parse(effectiveKey));
         if (id !== reqId.current) return;
         if (res.ok) setResult(res.data);
         else toast.error(res.error);
       });
     }, 220);
     return () => window.clearTimeout(handle);
-  }, [filters]);
+  }, [effectiveKey, urlKey]);
 
   const collegeName = useMemo(() => new Map(facets.colleges.map((c) => [c.id, c.shortName])), [facets.colleges]);
   const skillName = useMemo(() => new Map(facets.skills.map((s) => [s.slug, s.name])), [facets.skills]);
   const count = activeCount(filters);
-  const sort: SearchSort = filters.sort ?? (filters.q ? "relevance" : filters.skills?.length ? "skill" : "score");
+  const sort: SearchSort = effective.sort ?? (effective.q ? "relevance" : effective.skills?.length ? "skill" : "score");
 
   const chips: { key: string; label: string; clear: () => void }[] = [
     ...(filters.skills ?? []).map((s) => ({ key: `s-${s}`, label: skillName.get(s) ?? s, clear: () => patch({ skills: toggle(filters.skills, s) }) })),
@@ -150,10 +169,12 @@ export function SearchView({
             <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-subtle" aria-hidden />
             <Input
               type="search"
-              value={filters.q ?? ""}
-              onChange={(e) => patch({ q: e.target.value || undefined })}
-              placeholder="Search names, headlines, repos: “offline sync”, “payments”…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Try “react devs in Surat with live apps, 2026 grads, score 70+”"
               className="h-11 pl-10"
+              aria-describedby="nl-search-hint"
+              maxLength={300}
             />
             {pending && <LoaderCircle className="absolute top-1/2 right-3.5 size-4 -translate-y-1/2 animate-spin text-subtle" aria-hidden />}
           </label>
@@ -171,7 +192,7 @@ export function SearchView({
               </SelectTrigger>
               <SelectContent>
                 {(Object.keys(SORT_LABEL) as SearchSort[]).map((s) => (
-                  <SelectItem key={s} value={s} disabled={(s === "relevance" && !filters.q) || (s === "skill" && !filters.skills?.length)}>
+                  <SelectItem key={s} value={s} disabled={(s === "relevance" && !effective.q) || (s === "skill" && !effective.skills?.length)}>
                     {SORT_LABEL[s]}
                   </SelectItem>
                 ))}
@@ -180,12 +201,24 @@ export function SearchView({
           </div>
         </div>
 
+        <p id="nl-search-hint" className="sr-only">
+          Plain English works: skills, city, graduation year, minimum score, live apps, endorsements, passed checks, commits and colleges become filters.
+        </p>
+        <TalentChips className="mt-2.5" chips={parsed.chips} text={parsed.text} onRemove={(c) => setText((t) => removeChip(t, c, vocab))} />
+
         {(saved.length > 0 || canSave) && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="font-mono text-[11px] tracking-wider text-subtle uppercase">Saved</span>
             {saved.map((s) => (
               <span key={s.id} className="group inline-flex items-center overflow-hidden rounded-full border border-line bg-surface text-xs">
-                <button type="button" className="px-3 py-1.5 hover:bg-surface-2" onClick={() => setFilters(s.filters)}>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 hover:bg-surface-2"
+                  onClick={() => {
+                    setFilters(s.filters);
+                    setText("");
+                  }}
+                >
                   {s.name}
                 </button>
                 <button
@@ -203,7 +236,7 @@ export function SearchView({
               </span>
             ))}
             {canSave && (
-              <Button size="sm" variant="ghost" onClick={() => setSaveOpen(true)} disabled={!count && !filters.q}>
+              <Button size="sm" variant="ghost" onClick={() => setSaveOpen(true)} disabled={!activeCount(effective) && !effective.q}>
                 <BookmarkPlus /> Save this search
               </Button>
             )}
@@ -257,7 +290,13 @@ export function SearchView({
             title="No evidence matches every filter"
             description="Loosen one constraint (the minimum score or own-commit bar is usually the strictest) and results will flow back in."
             action={
-              <Button variant="secondary" onClick={() => setFilters({})}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilters({});
+                  setText("");
+                }}
+              >
                 <RotateCcw /> Reset filters
               </Button>
             }
@@ -277,7 +316,7 @@ export function SearchView({
                   >
                     <CandidateRow
                       hit={hit}
-                      wanted={filters.skills}
+                      wanted={effective.skills}
                       selected={compare.some((c) => c.userId === hit.userId)}
                       onCompare={() => toggleCompare(hit)}
                     />
@@ -311,7 +350,7 @@ export function SearchView({
       <SaveSearchDialog
         open={saveOpen}
         onOpenChange={setSaveOpen}
-        filters={filters}
+        filters={effective}
         onSaved={(s) => setSaved((all) => [s, ...all])}
       />
     </div>

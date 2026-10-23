@@ -380,3 +380,22 @@ export async function isMessageableStudent(studentUserId: string) {
   });
   return !!row;
 }
+
+/** A job of this company with its required skills named, for the candidate story's gap analysis. */
+export async function getJobForStory(scope: RecruiterScope, jobId: string) {
+  const db = await getDb();
+  const job = await db.query.jobs.findFirst({
+    where: and(eq(jobs.id, jobId), eq(jobs.companyId, scope.companyId)),
+    columns: { id: true, title: true, minProofScore: true, requiredSkills: true },
+  });
+  if (!job) return null;
+  const slugs = (job.requiredSkills ?? []).map((r) => r.skillSlug);
+  const named = slugs.length ? await db.select({ slug: skills.slug, name: skills.name }).from(skills).where(inArray(skills.slug, slugs)) : [];
+  const nameOf = new Map(named.map((s) => [s.slug, s.name]));
+  return {
+    id: job.id,
+    title: job.title,
+    minProofScore: job.minProofScore,
+    requiredSkills: (job.requiredSkills ?? []).map((r) => ({ ...r, name: nameOf.get(r.skillSlug) })),
+  };
+}

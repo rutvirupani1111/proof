@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/toast";
 import { cn, formatLpa, formatNumber, timeAgo } from "@/lib/utils";
 import { JOB_TYPES, JOB_WORK_MODES } from "@/lib/validation/recruiter";
+import { JobMatchCounter } from "@/components/recruiter/job-match-counter";
 import { closeJobAction, reopenJobAction, saveJobAction } from "@/server/recruiter/actions";
 
 type Job = {
@@ -317,6 +318,9 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
               </SelectContent>
             </Select>
           )}
+        </div>
+        <div className="sm:col-span-2">
+          <JobMatchCounter skills={form.requiredSkills} minScore={form.minProofScore} />
         </div>
         <DialogFooter className="sm:col-span-2">
           <Button type="submit" loading={pending}>

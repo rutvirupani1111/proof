@@ -1,20 +1,26 @@
 "use client";
 
 import { Command } from "cmdk";
-import { CornerDownLeft, LogOut, MoonStar, Search } from "lucide-react";
+import { CornerDownLeft, LogOut, MoonStar, Search, UserSearch } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { TalentChips } from "@/components/recruiter/talent-chips";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import { signOut } from "@/lib/auth/client";
 import type { Portal } from "@/lib/auth/roles";
+import { parseTalentQuery } from "@/server/search/talent-query";
 import { NAV } from "./nav-config";
 
 const itemClass =
   "flex h-10 cursor-default items-center gap-3 rounded-lg px-3 text-sm text-ink outline-none data-[selected=true]:bg-surface-2 [&_svg]:size-4 [&_svg]:text-subtle";
 
-/** ⌘K / Ctrl+K palette: jump to any page of the current portal, toggle theme, sign out. */
+/**
+ * ⌘K / Ctrl+K palette: jump to any page of the current portal, toggle theme, sign out. In the
+ * recruiter portal, any text also offers "Find: ..." which opens evidence search with the
+ * plain-English query parsed into filters.
+ */
 export function CommandPalette({
   portal,
   open,
@@ -26,11 +32,15 @@ export function CommandPalette({
 }) {
   const router = useRouter();
   const { resolved, setTheme } = useTheme();
+  const [query, setQuery] = useState("");
+  const talent = portal === "recruiter" && query.trim().length > 1;
+  const preview = useMemo(() => (talent ? parseTalentQuery(query) : null), [talent, query]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        if (open) setQuery("");
         onOpenChange(!open);
       }
     };
@@ -38,13 +48,18 @@ export function CommandPalette({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
+  const close = (next: boolean) => {
+    if (!next) setQuery("");
+    onOpenChange(next);
+  };
+
   const run = (fn: () => void) => {
-    onOpenChange(false);
+    close(false);
     fn();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={close}>
       <DialogContent hideClose className="top-[14vh] max-w-xl overflow-hidden p-0">
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <DialogDescription className="sr-only">Search pages and actions</DialogDescription>
@@ -53,15 +68,40 @@ export function CommandPalette({
             <Search className="size-4 text-subtle" aria-hidden />
             <Command.Input
               autoFocus
-              placeholder="Jump to a page or run an action…"
+              value={query}
+              onValueChange={setQuery}
+              placeholder={portal === "recruiter" ? "Jump to a page, or find “react devs in Surat, score 70+”…" : "Jump to a page or run an action…"}
               className="h-12 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-subtle"
             />
             <Kbd>esc</Kbd>
           </div>
           <Command.List className="max-h-[50vh] overflow-y-auto p-2">
-            <Command.Empty className="px-3 py-8 text-center text-sm text-muted">
-              Nothing matches. Evidence search arrives with the recruiter portal.
-            </Command.Empty>
+            <Command.Empty className="px-3 py-8 text-center text-sm text-muted">Nothing matches.</Command.Empty>
+            {talent && preview && (
+              <Command.Group
+                forceMount
+                heading="Evidence search"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[10.5px] [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:text-subtle [&_[cmdk-group-heading]]:uppercase"
+              >
+                <Command.Item
+                  forceMount
+                  value={`find-talent ${query}`}
+                  onSelect={() => run(() => router.push(`/recruiter/search?t=${encodeURIComponent(query.trim().slice(0, 300))}`))}
+                  className="flex min-h-10 cursor-default flex-col items-start gap-1.5 rounded-lg px-3 py-2 text-sm text-ink outline-none data-[selected=true]:bg-surface-2"
+                >
+                  <span className="flex w-full items-center gap-3 [&_svg]:size-4 [&_svg]:text-subtle">
+                    <UserSearch />
+                    <span className="min-w-0 truncate">
+                      Find: <span className="font-medium">{query.trim()}</span>
+                    </span>
+                    <CornerDownLeft className="ml-auto shrink-0 opacity-0 [[data-selected=true]_&]:opacity-100" />
+                  </span>
+                  {(preview.chips.length > 0 || preview.text) && (
+                    <TalentChips size="sm" className="pl-7" chips={preview.chips} text={preview.text} />
+                  )}
+                </Command.Item>
+              </Command.Group>
+            )}
             {NAV[portal].map((section, i) => (
               <Command.Group
                 key={section.title ?? `g${i}`}

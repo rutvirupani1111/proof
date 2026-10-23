@@ -295,3 +295,45 @@ export async function getSearchFacets() {
   };
 }
 export type SearchFacets = Awaited<ReturnType<typeof getSearchFacets>>;
+
+/* -------------------------------------------------------------------------- */
+/* Live match preview for the job editor                                       */
+/* -------------------------------------------------------------------------- */
+
+export type JobRequirements = { skills: { slug: string; minScore: number }[]; minScore: number };
+export type JobMatchPreview = { total: number; sample: { userId: string; name: string; image: string | null; handle: string }[] };
+
+/**
+ * How many recruiter-visible candidates meet a job's bar right now: the same WHERE as evidence
+ * search (privacy included), tightened so each required skill clears its own minimum score.
+ */
+export async function previewJobMatches(req: JobRequirements, sampleSize = 3): Promise<JobMatchPreview> {
+  const db = await getDb();
+  const slugs = [...new Set(req.skills.map((s) => s.slug.toLowerCase()))].slice(0, 8);
+  const skillRows = slugs.length
+    ? await db.select({ id: skills.id, slug: skills.slug }).from(skills).where(inArray(skills.slug, slugs))
+    : [];
+  const idBySlug = new Map(skillRows.map((r) => [r.slug, r.id]));
+  const filters = normalizeFilters({ skills: slugs.length ? slugs : undefined, minScore: req.minScore || undefined });
+  const conds: SQL[] = [buildWhere(filters, skillRows.map((r) => r.id))];
+  for (const s of req.skills) {
+    const skillId = idBySlug.get(s.slug.toLowerCase());
+    if (skillId && s.minScore > 0) {
+      conds.push(
+        sql`exists (select 1 from "profile_skills" ps where ps.user_id = ${sp.userId} and ps.skill_id = ${skillId} and ps.proof_score >= ${s.minScore})`,
+      );
+    }
+  }
+  const where = and(...conds)!;
+  const [sample, [total]] = await Promise.all([
+    db
+      .select({ userId: sp.userId, name: users.name, image: users.image, handle: sp.handle })
+      .from(sp)
+      .innerJoin(users, eq(users.id, sp.userId))
+      .where(where)
+      .orderBy(desc(sp.proofScore))
+      .limit(sampleSize),
+    db.select({ n: count() }).from(sp).where(where),
+  ]);
+  return { total: Number(total?.n ?? 0), sample };
+}

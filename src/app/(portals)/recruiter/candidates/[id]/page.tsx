@@ -21,8 +21,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SealGlyph } from "@/components/ui/seal-glyph";
 import { cn, timeAgo } from "@/lib/utils";
 import { PIPELINE_STAGE_LABEL } from "@/lib/validation/recruiter";
+import { CandidateStoryCard } from "@/components/recruiter/candidate-story";
 import { requireRole } from "@/server/auth/guard";
-import { getCandidate, getJobOptions, getPublishedChecks, getShortlistOptions } from "@/server/recruiter/queries";
+import { buildCandidateStory } from "@/server/recruiter/candidate-story";
+import { getCandidate, getJobForStory, getJobOptions, getPublishedChecks, getShortlistOptions } from "@/server/recruiter/queries";
 import { recruiterScopeOf } from "@/server/recruiter/scope";
 import { ScoreRing } from "../../_components/score-ring";
 import { CandidateActions } from "./candidate-actions";
@@ -41,8 +43,15 @@ function fmtSec(s: number | null) {
   return m < 1 ? `${s}s` : `${m} min`;
 }
 
-export default async function CandidatePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CandidatePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
+  const jobParam = (await searchParams).job;
   const user = await requireRole("recruiter", `/recruiter/candidates/${id}`);
   const scope = recruiterScopeOf(user);
   const c = await getCandidate(scope, id);
@@ -62,9 +71,26 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const [jobs, lists, checks] = scope
-    ? await Promise.all([getJobOptions(scope), getShortlistOptions(scope), getPublishedChecks()])
-    : [[], [], []];
+  const [jobs, lists, checks, storyJob] = scope
+    ? await Promise.all([
+        getJobOptions(scope),
+        getShortlistOptions(scope),
+        getPublishedChecks(),
+        typeof jobParam === "string" && jobParam.length <= 64 ? getJobForStory(scope, jobParam) : Promise.resolve(null),
+      ])
+    : [[], [], [], null];
+  const story = buildCandidateStory(
+    {
+      firstName: c.user.name.split(" ")[0] || c.user.name,
+      proofScore: c.profile.proofScore,
+      skills: c.skills,
+      repos: c.repos,
+      deployments: c.deployments,
+      attempts: c.attempts,
+      attestations: c.attestations,
+    },
+    storyJob,
+  );
   const b = c.profile.scoreBreakdown;
   const parts = b
     ? [
@@ -121,7 +147,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
               </div>
             </div>
             {parts.length > 0 && (
-              <div className="border-t border-line bg-surface/70 px-5 py-4 sm:px-6">
+              <div id="evidence-score" className="scroll-mt-24 border-t border-line bg-surface/70 px-5 py-4 sm:px-6">
                 <p className="mb-3 font-mono text-[11px] tracking-wider text-subtle uppercase">Why {c.profile.proofScore}?</p>
                 <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
                   {parts.map((p) => (
@@ -149,8 +175,15 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
             )}
           </Card>
 
+          <CandidateStoryCard
+            story={story}
+            candidateId={c.user.id}
+            job={storyJob ? { id: storyJob.id, title: storyJob.title } : null}
+            jobs={jobs.filter((j) => j.status !== "closed")}
+          />
+
           {/* Verified skills */}
-          <Card>
+          <Card id="evidence-skills" className="scroll-mt-24">
             <CardHeader>
               <CardTitle>Verified skills</CardTitle>
             </CardHeader>
@@ -179,7 +212,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
           </Card>
 
           {/* Code authorship */}
-          <EvidenceSection icon={GitBranch} title="Code they wrote" count={c.repos.length} empty="No repositories imported yet.">
+          <EvidenceSection id="evidence-repos" icon={GitBranch} title="Code they wrote" count={c.repos.length} empty="No repositories imported yet.">
             {c.repos.map((r) => {
               const flags = r.redFlags ?? [];
               return (
@@ -213,7 +246,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
           </EvidenceSection>
 
           {/* Deployments */}
-          <EvidenceSection icon={Globe} title="Live deployments" count={liveDeploys.length} empty="No live deployment verified yet.">
+          <EvidenceSection id="evidence-deployments" icon={Globe} title="Live deployments" count={liveDeploys.length} empty="No live deployment verified yet.">
             {c.deployments.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                 <div className="min-w-0">
@@ -240,7 +273,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
           </EvidenceSection>
 
           {/* Skill checks */}
-          <EvidenceSection icon={ClipboardCheck} title="Skill checks" count={c.attempts.filter((a) => a.status === "passed").length} empty="No skill checks taken yet.">
+          <EvidenceSection id="evidence-checks" icon={ClipboardCheck} title="Skill checks" count={c.attempts.filter((a) => a.status === "passed").length} empty="No skill checks taken yet.">
             {c.attempts.map((a) => (
               <li key={a.id} className="grid gap-1.5 py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -266,7 +299,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ id: 
           </EvidenceSection>
 
           {/* Endorsements */}
-          <EvidenceSection icon={ShieldCheck} title="Mentor endorsements" count={c.attestations.length} empty="No endorsements yet.">
+          <EvidenceSection id="evidence-endorsements" icon={ShieldCheck} title="Mentor endorsements" count={c.attestations.length} empty="No endorsements yet.">
             {c.attestations.map((a) => (
               <li key={a.id} className="py-3.5 first:pt-0 last:pb-0">
                 <figure className="relative rounded-xl border border-line bg-surface-2/60 p-4">
@@ -375,17 +408,19 @@ function EvidenceSection({
   count,
   empty,
   children,
+  id,
 }: {
   icon: typeof Globe;
   title: string;
   count: number;
   empty: string;
   children: React.ReactNode;
+  id?: string;
 }) {
   const items = Array.isArray(children) ? children : [children];
   const hasItems = items.flat().filter(Boolean).length > 0;
   return (
-    <Card>
+    <Card id={id} className="scroll-mt-24 target:ring-2 target:ring-lime/60">
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="inline-flex items-center gap-2">
           <Icon className="size-4 text-subtle" aria-hidden /> {title}

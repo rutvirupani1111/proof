@@ -342,7 +342,7 @@ function CardBody({
         {handle ?? <span className="grid size-7 place-items-center text-subtle"><GripVertical className="size-4" /></span>}
         <Avatar name={card.name} src={card.image} size="sm" className="mt-0.5" />
         <div className="min-w-0 flex-1 pl-1">
-          <Link href={`/recruiter/candidates/${card.studentUserId}`} className="block truncate text-sm font-medium hover:underline">
+          <Link href={`/recruiter/candidates/${card.studentUserId}${card.jobId ? `?job=${card.jobId}` : ""}`} className="block truncate text-sm font-medium hover:underline">
             {card.name}
           </Link>
           <p className="truncate text-xs text-muted">{card.headline ?? card.handle}</p>

@@ -11,8 +11,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { SealGlyph } from "@/components/ui/seal-glyph";
 import { Stat } from "@/components/ui/stat";
+import { ProofPath } from "@/components/student/proof-path";
 import { timeAgo } from "@/lib/utils";
 import { requireRole } from "@/server/auth/guard";
+import { loadScoreItems } from "@/server/scoring";
+import { toWire } from "@/server/scoring/simulate";
 import { getStudentDashboard } from "@/server/student/queries";
 import { ScoreDial, WhyDrawer } from "./_components/score-panel";
 
@@ -30,7 +33,7 @@ const NEXT_ICON = { github: GitBranch, authorship: GitBranch, deployments: Globe
 
 export default async function StudentDashboard() {
   const user = await requireRole("student", "/student");
-  const data = await getStudentDashboard(user.id);
+  const [data, scored] = await Promise.all([getStudentDashboard(user.id), loadScoreItems(user.id)]);
   if (data.profile && data.profile.onboardingStep < 4 && user.role === "student") redirect("/student/onboarding");
   const first = user.name.split(" ")[0];
   const score = data.profile?.proofScore ?? 0;
@@ -143,6 +146,14 @@ export default async function StudentDashboard() {
           )}
         </FadeIn>
       </div>
+
+      <FadeIn delay={0.12} className="mt-6">
+        <ProofPath
+          items={toWire(scored.items)}
+          githubVerified={scored.items.some((i) => i.kind === "github_ownership")}
+          now={new Date().toISOString()}
+        />
+      </FadeIn>
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Verified evidence" value={data.verifiedEvidence} icon={BadgeCheck} tone="verified" />

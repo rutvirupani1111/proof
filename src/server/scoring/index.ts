@@ -24,12 +24,30 @@ import {
   studentProfiles,
 } from "@/db/schema";
 import { computeScore, type ExcludedRepo, type ScoreItem, type ScoreResult } from "./engine";
+import { buildReplay, type Replay, type RepoSpan } from "./replay";
 
 export { CAPS, SIGNAL_LABEL, nextBestProofs, type ScoreResult, type SkillScore, type NextProof } from "./engine";
 
 const SEVERE = new Set(["all_commits_one_day", "bulk_import", "backdated_history", "fork_without_own_commits"]);
 
 export async function computeProofScore(userId: string, now = new Date()): Promise<ScoreResult> {
+  const { items, excluded } = await loadScoreItems(userId);
+  return computeScore(items, now, excluded);
+}
+
+/** The week-by-week Proof Replay for a student the caller is allowed to see. */
+export async function getProofReplay(userId: string, now = new Date()): Promise<Replay> {
+  const { items, repoSpans } = await loadScoreItems(userId);
+  return buildReplay(items, repoSpans, now);
+}
+
+/**
+ * The exact evidence the engine scores (verified, red-flag repos excluded), plus each repo's
+ * commit span for Proof Replay. Feeds computeProofScore, Proof Path and Proof Replay alike.
+ */
+export async function loadScoreItems(
+  userId: string,
+): Promise<{ items: ScoreItem[]; excluded: ExcludedRepo[]; repoSpans: Record<string, RepoSpan> }> {
   const db = await getDb();
   const rows = await db
     .select()
@@ -67,6 +85,7 @@ export async function computeProofScore(userId: string, now = new Date()): Promi
   ]);
 
   const items: ScoreItem[] = [];
+  const repoSpans: Record<string, RepoSpan> = {};
   for (const r of rows) {
     const base = { id: r.id, title: r.title, skills: r.skillSlugs, at: r.verifiedAt ?? r.occurredAt ?? r.createdAt };
     if (r.kind === "github_ownership") items.push({ ...base, kind: "github_ownership" });
@@ -74,6 +93,7 @@ export async function computeProofScore(userId: string, now = new Date()): Promi
       const s = stats.find((x) => x.repoId === r.sourceId);
       if (!s || s.redFlags.some((f) => SEVERE.has(f))) continue;
       items.push({ ...base, kind: "repo_authorship", ownCommits: s.ownCommits, activeWeeks: s.activeWeeks, authorshipShare: s.authorshipShare });
+      repoSpans[r.id] = { first: s.firstCommitAt, last: s.lastCommitAt };
     } else if (r.kind === "deployment") {
       const d = deps.find((x) => x.id === r.sourceId);
       if (!d) continue;
@@ -93,7 +113,7 @@ export async function computeProofScore(userId: string, now = new Date()): Promi
   const excluded: ExcludedRepo[] = userRepos
     .filter((r) => r.flags.some((f) => SEVERE.has(f)))
     .map((r) => ({ name: r.name, flags: r.flags }));
-  return computeScore(items, now, excluded);
+  return { items, excluded, repoSpans };
 }
 
 /** Computes and persists the score: student_profiles.proof_score/score_breakdown and profile_skills. */

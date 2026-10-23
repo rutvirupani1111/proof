@@ -2,11 +2,13 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { springs } from "@/components/motion/transitions";
 import { NumberTicker } from "@/components/motion/number-ticker";
+import { useReducedMotionPref } from "@/components/motion/use-reduced-motion-pref";
 import { Button } from "@/components/ui/button";
 import { Seal, useStampShake } from "@/components/ui/seal";
+import { stampFeedback } from "@/components/student/stamp-feedback";
 
 export type SealMomentData = {
   title: string;
@@ -19,9 +21,19 @@ export type SealMomentData = {
 /**
  * The verification moment: a card rises, the seal stamps onto it with a spring overshoot and a
  * haptic-like shake, and the Proof Score ticks up. Shown after every successful verification.
+ * On landing: a short vibration where supported, plus the stamp sound if enabled in settings.
  */
 export function SealMoment({ data, onClose }: { data: SealMomentData | null; onClose: () => void }) {
   const [scope, shake] = useStampShake();
+  const land = useCallback(() => {
+    shake();
+    stampFeedback();
+  }, [shake]);
+  // Reduced motion renders a still seal (no landing callback), so give the feedback on open.
+  const reduce = useReducedMotionPref();
+  useEffect(() => {
+    if (data && reduce) stampFeedback();
+  }, [data, reduce]);
 
   useEffect(() => {
     if (!data) return;
@@ -55,7 +67,7 @@ export function SealMoment({ data, onClose }: { data: SealMomentData | null; onC
             className="relative w-full max-w-sm overflow-hidden rounded-[var(--radius-card)] border border-verified/40 bg-surface bg-ledger p-6 pt-8 text-center shadow-pop ring-1 ring-lime/30"
           >
             <div className="mx-auto mb-4 grid place-items-center">
-              <Seal size={112} stamp="mount" delay={0.18} onLand={shake} label="Verified · Proof · Signed ·" />
+              <Seal size={112} stamp="mount" delay={0.18} onLand={land} label="Verified · Proof · Signed ·" />
             </div>
             <p className="font-mono text-[11px] tracking-[0.16em] text-subtle uppercase">Evidence verified</p>
             <h2 id="seal-moment-title" className="mt-1.5 font-display text-xl font-semibold text-balance">

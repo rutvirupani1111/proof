@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { StampSoundSetting } from "@/components/student/stamp-sound-setting";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireRole } from "@/server/auth/guard";
 import { getStudentSettings } from "@/server/student/settings";
@@ -19,6 +20,9 @@ export default async function StudentSettingsPage() {
         privacy={{ visibility: profile?.visibility ?? "recruiters", openToWork: profile?.openToWork ?? true, handle: profile?.handle ?? null }}
         muted={profile?.mutedNotifications ?? []}
       />
+      <div className="mt-5">
+        <StampSoundSetting />
+      </div>
     </>
   );
 }

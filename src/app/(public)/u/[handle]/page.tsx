@@ -9,6 +9,7 @@ import { ScoreBreakdownPanel } from "@/components/profile/score-breakdown";
 import { ScoreRing } from "@/components/profile/score-ring";
 import { PassArrival } from "@/components/profile/pass/pass-arrival";
 import { ProofPass } from "@/components/profile/pass/proof-pass";
+import { ProofReplay } from "@/components/profile/proof-replay";
 import { buildPassQr, renderPassQrSvg } from "@/components/profile/pass/qr";
 import { SkillConstellation } from "@/components/profile/skill-constellation";
 import { WorkTimeline } from "@/components/profile/work-timeline";
@@ -21,6 +22,7 @@ import { SealGlyph } from "@/components/ui/seal-glyph";
 import { getCurrentUser } from "@/server/auth/guard";
 import { getDossier, getShareCard } from "@/server/public/queries";
 import { getOrigin } from "@/server/public/site";
+import { getProofReplay } from "@/server/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +66,7 @@ export default async function DossierPage({ params }: Props) {
   }
 
   const { profile, score, skills, evidence, timeline, sealCount, credentialCount, isOwner } = result;
-  const origin = await getOrigin();
+  const [origin, replay] = await Promise.all([getOrigin(), evidence.length ? getProofReplay(profile.userId) : null]);
   const url = `${origin}/u/${profile.handle}`;
   const passUrl = `${url}?via=pass`;
   const passQr = renderPassQrSvg(buildPassQr(passUrl), { id: "pp", animate: true });
@@ -197,6 +199,16 @@ export default async function DossierPage({ params }: Props) {
                 ))}
               </ul>
             </section>
+
+            {/* Replay */}
+            {replay && replay.weeks.length > 1 && (
+              <section aria-labelledby="replay-h" className="mt-16">
+                <SectionHeading id="replay-h" eyebrow={`Proof Replay · ${replay.weeks.length} weeks`} title="Watch the work add up." />
+                <div className="mt-6">
+                  <ProofReplay replay={replay} />
+                </div>
+              </section>
+            )}
           </>
         )}
 

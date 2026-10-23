@@ -137,7 +137,8 @@ function orderFor(sort: SearchSort, f: SearchFiltersInput, skillIds: string[]): 
         ? [sql`ts_rank(to_tsvector('english', ${sp.searchText}), to_tsquery('english', ${tsq})) desc`, desc(sp.proofScore)]
         : [desc(sp.proofScore)];
     case "skill":
-      return [sql`${skillAvg} desc`, desc(sp.proofScore)];
+      // A bare `0` in ORDER BY is a column position in Postgres, so never emit it.
+      return skillIds.length ? [sql`${skillAvg} desc`, desc(sp.proofScore)] : [desc(sp.proofScore)];
     case "commits":
       return [sql`${ownCommitsSql} desc`, desc(sp.proofScore)];
     case "deployments":

@@ -4,15 +4,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireRole } from "@/server/auth/guard";
+import { getStudentDrives } from "@/server/student/drives";
 import { getJobsBoard } from "@/server/student/jobs";
 import { JobsBoard } from "./board";
+import { DrivesPanel } from "./drives-panel";
 
 export const metadata: Metadata = { title: "Jobs" };
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
   const user = await requireRole("student", "/student/jobs");
-  const { jobs, proofScore } = await getJobsBoard(user.id);
+  const [{ jobs, proofScore }, drives] = await Promise.all([getJobsBoard(user.id), getStudentDrives(user.id)]);
 
   return (
     <>
@@ -29,6 +31,7 @@ export default async function JobsPage() {
           </Button>
         }
       />
+      {drives.length > 0 && <DrivesPanel drives={drives} />}
       <JobsBoard jobs={jobs} proofScore={proofScore} />
     </>
   );

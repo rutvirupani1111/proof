@@ -134,4 +134,4 @@ export const studentNotificationsSchema = z.object({
   muted: z.array(z.enum(NOTIFICATION_KEYS)).max(NOTIFICATION_CATEGORIES.length),
 });
 
-export const driveRegistrationSchema = z.object({ driveId: z.string().uuid() });
+export const driveRegistrationSchema = z.object({ driveId: z.string().trim().min(1).max(80) });

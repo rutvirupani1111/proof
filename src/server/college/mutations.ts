@@ -38,8 +38,8 @@ export async function syncEligible(scope: CollegeScope, driveId: string) {
         userId: a.studentUserId,
         type: "drive.eligible",
         title: `You're eligible for ${drive.companyName}`,
-        body: `${drive.title}${when}. Your verified evidence meets the bar.`,
-        href: "/student",
+        body: `${drive.title}${when}. Your verified evidence meets the bar. Register from Jobs.`,
+        href: "/student/jobs#drives",
       })),
     );
   }
@@ -94,7 +94,7 @@ export async function updateDriveStudent(
       type: "drive.selected",
       title: `Selected by ${drive.companyName}`,
       body: input.result || `${drive.title}: congratulations from your placement cell.`,
-      href: "/student",
+      href: "/student/jobs#drives",
     });
   }
   return row;

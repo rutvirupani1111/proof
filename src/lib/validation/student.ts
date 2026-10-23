@@ -50,3 +50,55 @@ export const applySchema = z.object({
 export const withdrawSchema = z.object({
   applicationId: z.string().min(1),
 });
+
+/* ------------------------------------------------------------------ proofs hub + skill checks */
+
+export const githubUsernameSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(1, "Enter your GitHub username.")
+    .max(39)
+    .regex(/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i, "That is not a valid GitHub username."),
+});
+
+export const importRepoSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .regex(/^[\w.-]+\/[\w.-]+$/, "Use the owner/name form, e.g. octocat/hello-world."),
+});
+
+export const addDeploymentSchema = z.object({
+  url: z.string().trim().min(4, "Enter the URL of something you shipped.").max(300),
+  repoId: z.string().uuid().nullish(),
+});
+
+export const deploymentIdSchema = z.object({ deploymentId: z.string().uuid() });
+
+export const requestEndorsementSchema = z
+  .object({
+    mentorId: z.string().uuid("Choose a mentor."),
+    subjectType: z.enum(["skill", "project"]),
+    skillId: z.string().uuid().nullish(),
+    repoId: z.string().uuid().nullish(),
+    relationship: z.string().trim().min(3, "Say how they know your work.").max(160),
+  })
+  .refine((v) => (v.subjectType === "skill" ? !!v.skillId : !!v.repoId), {
+    message: "Choose what they should endorse.",
+    path: ["subject"],
+  });
+
+export const checkSlugSchema = z.object({ slug: z.string().regex(/^[a-z0-9-]{2,60}$/) });
+
+export const runCodeSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]{2,60}$/),
+  code: z.string().max(20_000, "Keep the solution under 20,000 characters."),
+});
+
+export const submitAttemptSchema = z.object({
+  attemptId: z.string().uuid(),
+  code: z.string().max(20_000, "Keep the solution under 20,000 characters."),
+  pasteEvents: z.number().int().min(0).max(10_000),
+  tabBlurs: z.number().int().min(0).max(10_000),
+});

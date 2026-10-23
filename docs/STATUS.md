@@ -1,6 +1,6 @@
 # Build status
 
-Last updated: 2026-10-23 (foundation).
+Last updated: 2026-10-23 (foundation, engines, all four portals).
 
 ## Done (foundation)
 
@@ -76,20 +76,84 @@ alerts; `drive_students.offer_ctc` (integer) so package stats are numeric rather
 `result`; an index on `messages (least(sender, recipient), greatest(...), created_at)` once threads
 grow.
 
+## Verification engine, credentials, scoring, student + mentor portals (built)
+
+Engines (contract for other areas):
+
+- **Credentials** `src/server/credentials/index.ts`: `issueCredential({ userId, type, claim, evidenceId })`
+  and `verifyCredential(id) -> { valid, credential, subject, issuedAt, reason?, checks[] }`, plus
+  `verifyCredentialDocument(vc)` (signature only, for pasted JSON) and `getIssuerPublicKey()`.
+  W3C VC v2 JSON with an `eddsa-jcs-2022` Data Integrity proof (JCS canonicalisation, Ed25519 via
+  WebCrypto, base58btc `proofValue`); issuer `urn:proof:platform`, key from
+  `getOrCreateSecret(SECRET_KEYS.credentialKeypair)`. Verification checks signature, id binding,
+  subject binding, revocation and expiry. Pure helpers in `vc.ts`.
+- **Scoring** `src/server/scoring/index.ts`: `computeProofScore(userId) -> { overall, breakdown,
+  perSkill[{ skill, score, evidenceCount, breakdown }], explanation[] }` (read-only) and
+  `recomputeProofScore(userId)` (writes `student_profiles` + upserts `profile_skills`). Pure engine in
+  `engine.ts`: authorship 35 (log volume + active weeks x share, red-flagged repos excluded and
+  listed), deployments 20 (8 live, +2 homepage match, 3 if down), checks 25 (best passing attempt per
+  check, 5/8/11 by level x score), endorsements 20 (8 per distinct mentor, +2 repeats), recency 10
+  (halves every 90 days). `nextBestProofs()` drives the dashboard's "next best proof".
+- **Evidence recorder** `src/server/verify/evidence.ts`: `recordVerifiedEvidence()` upserts the
+  evidence row, signs its credential, rescores and notifies; `revokeEvidence()` undoes it. Every
+  verification path (and mentor endorsements) goes through it.
+- **Verification** `src/server/verify/`: `github.ts` (gist `proof.md` with handle + nonce via
+  `/users/{u}/gists`; conditional requests with an in-memory ETag body cache + `github_accounts.etag`;
+  optional `GITHUB_TOKEN`; repo import with own commits by author, totals from the Link header,
+  languages, red flags `all_commits_one_day`, `bulk_import`, `backdated_history`,
+  `fork_without_own_commits`, soft `low_authorship`), `deployments.ts` (meta tag or
+  `/.well-known/proof.txt`; SSRF guard: public hosts only incl. DNS resolution, manual re-validated
+  redirects, 8 s timeout, 512 KB cap; health re-checks), `sandbox.ts` (QuickJS WASM per test: 24 MB
+  memory, 512 KB stack, 1.5 s deadline, no fetch/fs/timers; expected values never enter the sandbox;
+  implements `{__failTimes}`, `{__double}` with a concurrency-limit check, expected `{__throws}`),
+  `checks.ts` (timed attempts with 30 s grace, invited attempts picked up, paste/blur signals stored),
+  `domain.ts` (generic institutional-email magic link for `mentor | company | college`, stored hashed
+  in `verifications`, 30 min, single use; Resend when `RESEND_API_KEY` is set, otherwise the link is
+  shown on screen; free-mail domains rejected). Pure rules in `rules.ts`, `domain-rules.ts`.
+- **Seed** issues a credential for every verified evidence row and recomputes every score with the
+  real engine (Ishita now scores 83, not the old hard-coded 82).
+- `next.config.ts` lists the QuickJS packages in `serverExternalPackages` (WASM loaded at runtime).
+
+Student portal: `/student` (score dial, "Why N?" drawer with every capped signal + the engine's
+reasons + per-skill scores, next best proof, recent credentials; redirects to onboarding until step 4),
+`/student/onboarding` (4 steps, resumable), `/student/proofs` (tabs: GitHub gist flow, repo import with
+authorship cards + red flags, deployments with token instructions + health, checks summary,
+endorsement requests to verified mentors), `/student/checks` + `/student/checks/[slug]` (lazy Monaco,
+countdown, run examples, submit, per-test results; hidden tests show pass/fail only), `/student/profile`
+(headline, about, accent token, up to 3 pinned verified evidence, visibility public / recruiters /
+hidden, live preview, rebuilds `search_text`), `/student/jobs` (filters, evidence match meter, apply
+sheet), `/student/applications` (stage stepper, withdraw). Every successful verification plays the
+Seal stamp moment (`student/_components/seal-moment.tsx`) with the score delta.
+
+Mentor portal: `/mentor` (setup flow when no `mentors` row), `/mentor/settings` (profile + domain magic
+link, dev link on screen), `/mentor/verify?token=` (explicit confirm, then seal), `/mentor/requests`
+(endorse with a 40-600 char statement, or decline), `/mentor/endorsements` (given, revoke, endorse a
+student directly by handle). Only domain-verified mentors can endorse.
+
+Tests (`npm test`): `credentials/vc.test.ts` (JCS, base58, sign/verify, tamper, wrong key),
+`scoring/engine.test.ts` (caps, sums, best-attempt, diminishing endorsements, per-skill, exclusions),
+`verify/rules.test.ts` (gist, authorship flags, meta/proof.txt, SSRF), `verify/sandbox.test.ts`
+(reference solutions pass all 12 seeded checks; infinite loop, memory, no host globals, hidden values
+not exposed, concurrency limit), `verify/domain.test.ts`.
+
+For other builders: recruiter/college domain verification can call `createDomainMagicLink({ purpose:
+"company" | "college" })` and `consumeDomainMagicLink(token)`; links point at `/recruiter/verify-domain`
+and `/college/verify-domain`, which those portals still need to add.
+
 ## Not built yet (by area)
 
 | Area | Next steps |
 |---|---|
-| Verification engine | Gist ownership check (ETag cache, optional `GITHUB_TOKEN`), repo import + authorship stats + red flags, deployment verification + health checks. `src/server/verification/` |
-| Skill checks | Monaco (lazy) runner page, QuickJS sandbox grading against `hidden_tests`, paste/blur signals. Seeded tests use small conventions for async tasks (`{ __failTimes }`, `{ __double }`, `{ __throws }`) that the grader harness must implement. |
-| Credentials | Ed25519 keypair via `getOrCreateSecret(SECRET_KEYS.credentialKeypair)`, VC issuance per evidence row, real signature check + QR on `/verify/[id]`. Seed has no credentials yet; backfill after the engine lands. |
-| Scoring | Real Proof Score engine writing `student_profiles.proof_score/score_breakdown` and `profile_skills`; "why 82?" drawer. Seeded scores are demo values. |
-| Student | Onboarding wizard, proofs hub, profile builder, jobs board, applications tracker, privacy controls, messages. |
+| Verification engine | Built (see above). Left: scheduled health re-checks for all deployments (cron), re-import to refresh repo stats. |
+| Skill checks | Built. Left: more tasks and languages; plagiarism similarity across submissions. |
+| Credentials | Built; `/verify/[id]` + QR belong to the public area. Left: publish the issuer key at a `.well-known` URL, status list for revocation. |
+| Scoring | Built; recomputed on every verification and in the seed. |
+| Student | Built except messages (reuse recruiter `ThreadView`), settings, and drive registration. |
 | Recruiter | Built (see "Recruiter + college" below). Left: real company domain verification (magic link) instead of the pending/verified display, emailed teammate invites, saved-search alerts when new evidence matches. |
 | College | Built (see below). Left: college domain verification flow, drive registration by students (student portal), offer CTC captured as a number for package stats. |
-| Mentor | Magic-link domain verification (show the link on screen when no email provider), requests inbox, attestation form. |
+| Mentor | Built. |
 | Public | Full dossier with skill constellation and timeline, pricing, for-colleges, for-recruiters pages, landing 3D hero (lazy R3F). |
-| Testing | Vitest (engine, scoring, credentials, sandbox), Playwright smoke on port 5191. |
+| Testing | Vitest engines + scoping tests done. Left: Playwright smoke on port 5191. |
 | Deploy | Vercel project `proof` + Neon; set `DATABASE_URL`; `vercel-build` migrates; seed showcase with `PROOF_SEED_REMOTE=1`. |
 
 ## Known caveats

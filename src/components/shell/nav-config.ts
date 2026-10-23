@@ -61,17 +61,17 @@ export const NAV: Record<Portal, NavSection[]> = {
     {
       title: "Talent",
       items: [
-        { label: "Evidence search", href: "/recruiter/search", icon: Search, soon: true },
-        { label: "Shortlists", href: "/recruiter/shortlists", icon: ListChecks, soon: true },
-        { label: "Pipeline", href: "/recruiter/pipeline", icon: KanbanSquare, soon: true },
+        { label: "Evidence search", href: "/recruiter/search", icon: Search },
+        { label: "Shortlists", href: "/recruiter/shortlists", icon: ListChecks },
+        { label: "Pipeline", href: "/recruiter/pipeline", icon: KanbanSquare },
       ],
     },
     {
       title: "Workspace",
       items: [
-        { label: "Jobs", href: "/recruiter/jobs", icon: Briefcase, soon: true },
-        { label: "Messages", href: "/recruiter/messages", icon: MessageSquare, soon: true },
-        { label: "Company", href: "/recruiter/company", icon: Building2, soon: true },
+        { label: "Jobs", href: "/recruiter/jobs", icon: Briefcase },
+        { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
+        { label: "Company", href: "/recruiter/company", icon: Building2 },
       ],
     },
   ],
@@ -80,13 +80,13 @@ export const NAV: Record<Portal, NavSection[]> = {
     {
       title: "Placement cell",
       items: [
-        { label: "Cohort", href: "/college/cohort", icon: Users, soon: true },
-        { label: "Drives", href: "/college/drives", icon: CalendarRange, soon: true },
-        { label: "Placement stats", href: "/college/stats", icon: FileBarChart, soon: true },
-        { label: "Nudges", href: "/college/nudges", icon: Sparkles, soon: true },
+        { label: "Cohort", href: "/college/cohort", icon: Users },
+        { label: "Drives", href: "/college/drives", icon: CalendarRange },
+        { label: "Placement stats", href: "/college/stats", icon: FileBarChart },
+        { label: "Nudges", href: "/college/nudges", icon: Sparkles },
       ],
     },
-    { items: [{ label: "College settings", href: "/college/settings", icon: GraduationCap, soon: true }] },
+    { items: [{ label: "College settings", href: "/college/settings", icon: GraduationCap }] },
   ],
   mentor: [
     { items: [{ label: "Dashboard", href: "/mentor", icon: LayoutDashboard }] },

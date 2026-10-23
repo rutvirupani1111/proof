@@ -184,8 +184,10 @@ export async function getDrives(scope: CollegeScope) {
     .where(eq(drives.collegeId, scope.collegeId))
     .groupBy(drives.id)
     .orderBy(desc(drives.scheduledAt));
+  const now = Date.now();
   return rows.map((r) => ({
     ...r.drive,
+    daysAway: r.drive.scheduledAt ? Math.round((r.drive.scheduledAt.getTime() - now) / 86_400_000) : null,
     total: Number(r.total),
     registered: Number(r.registered),
     selected: Number(r.selected),

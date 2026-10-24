@@ -53,7 +53,7 @@ export function DirectEndorseForm({ skills, disabled }: { skills: { slug: string
       <form onSubmit={submit} noValidate className="grid gap-4">
         <fieldset disabled={disabled || pending} className="grid gap-4 disabled:opacity-60">
           <Field label="Student handle" htmlFor="handle" error={errors.handle} hint="From their profile link, e.g. /u/ishita-varma.">
-            <Input id="handle" name="handle" placeholder="ishita-varma" autoComplete="off" aria-invalid={!!errors.handle} />
+            <Input id="handle" name="handle" placeholder="e.g. ishita-varma" autoComplete="off" autoCapitalize="none" spellCheck={false} aria-invalid={!!errors.handle} />
           </Field>
           <Field label="Skill" htmlFor="skill" error={errors.skillSlug}>
             <Select value={skill} onValueChange={setSkill}>
@@ -70,7 +70,7 @@ export function DirectEndorseForm({ skills, disabled }: { skills: { slug: string
             </Select>
           </Field>
           <Field label="How you know their work" htmlFor="direct-relationship" error={errors.relationship}>
-            <Input id="direct-relationship" name="relationship" placeholder="Supervised their summer internship" aria-invalid={!!errors.relationship} />
+            <Input id="direct-relationship" name="relationship" placeholder="e.g. Supervised their summer internship" autoComplete="off" aria-invalid={!!errors.relationship} />
           </Field>
           <Field label="Statement" htmlFor="direct-statement" error={errors.statement}>
             <Textarea

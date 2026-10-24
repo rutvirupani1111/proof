@@ -173,7 +173,7 @@ export function ProfileBuilder({
                 value={form.headline}
                 maxLength={120}
                 onChange={(e) => set("headline", e.target.value)}
-                placeholder="Full-stack builder: Node, Postgres and React"
+                placeholder="e.g. Full-stack builder: Node, Postgres and React"
               />
             </Field>
             <Field label="About" htmlFor="about" error={errors.about} hint={`${form.about.length}/1200`}>
@@ -188,7 +188,7 @@ export function ProfileBuilder({
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Location" htmlFor="location" error={errors.location}>
-                <Input id="location" value={form.location} maxLength={80} onChange={(e) => set("location", e.target.value)} placeholder="Surat" />
+                <Input id="location" value={form.location} maxLength={80} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Surat" autoComplete="address-level2" />
               </Field>
               <div className="grid gap-1.5">
                 <span className="text-[13px] font-medium" id="otw-label">

@@ -37,7 +37,11 @@ export function InviteTeammate({ domain }: { domain: string }) {
         }}
       >
         <Field label="Work email" htmlFor="invite-email" error={error} hint={`Must be an @${domain} address.`}>
-          <Input id="invite-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={`name@${domain}`} aria-invalid={!!error} />
+          <Input id="invite-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={`name@${domain}`}
+          inputMode="email"
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false} aria-invalid={!!error} />
         </Field>
         <Button type="submit" variant="secondary" loading={pending}>
           Create invite

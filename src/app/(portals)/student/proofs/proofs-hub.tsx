@@ -231,7 +231,7 @@ function GithubPanel({ hub, onMoment }: { hub: Hub; onMoment: (m: Moment) => voi
                 });
               }}
             >
-              <Input aria-label="GitHub username" placeholder="octocat" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" className="sm:max-w-xs" />
+              <Input aria-label="GitHub username" placeholder="your-github-username" autoCapitalize="none" spellCheck={false} value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" className="sm:max-w-xs" />
               <Button type="submit" variant="secondary" loading={pending}>
                 {statement ? "New code" : "Get my code"}
               </Button>
@@ -345,7 +345,7 @@ function ReposPanel({ hub, onMoment, goGithub }: { hub: Hub; onMoment: (m: Momen
               if (manual.trim()) void doImport(manual.trim());
             }}
           >
-            <Input aria-label="Repository owner/name" placeholder="owner/repo (e.g. a team repo you committed to)" value={manual} onChange={(e) => setManual(e.target.value)} />
+            <Input aria-label="Repository owner/name" placeholder="owner/repo, e.g. team/hackathon-app" autoComplete="off" autoCapitalize="none" spellCheck={false} value={manual} onChange={(e) => setManual(e.target.value)} />
             <Button type="submit" variant="secondary" loading={busy === manual.trim() && !!manual}>
               Import
             </Button>
@@ -515,7 +515,7 @@ function DeploymentsPanel({ hub, onMoment }: { hub: Hub; onMoment: (m: Moment) =
               });
             }}
           >
-            <Input aria-label="Deployment URL" placeholder="https://my-app.vercel.app" value={url} onChange={(e) => setUrl(e.target.value)} inputMode="url" />
+            <Input aria-label="Deployment URL" autoComplete="url" spellCheck={false} placeholder="https://your-app.vercel.app" value={url} onChange={(e) => setUrl(e.target.value)} inputMode="url" />
             <Select value={repoId} onValueChange={setRepoId}>
               <SelectTrigger aria-label="Linked repo">
                 <SelectValue placeholder="Linked repo (optional)" />
@@ -890,7 +890,7 @@ function RequestDialog({ hub }: { hub: Hub }) {
             </Select>
           </Field>
           <Field label="How they know your work" htmlFor="relationship" hint="e.g. Guided my final-year project">
-            <Textarea id="relationship" value={relationship} onChange={(e) => setRelationship(e.target.value)} maxLength={160} className="min-h-16" />
+            <Textarea id="relationship" placeholder="e.g. Professor for my capstone project" value={relationship} onChange={(e) => setRelationship(e.target.value)} maxLength={160} className="min-h-16" />
           </Field>
           {error && (
             <p role="alert" className="text-sm text-coral-text">

@@ -173,6 +173,8 @@ export function SearchView({
               onChange={(e) => setText(e.target.value)}
               placeholder="Try “react devs in Surat with live apps, 2026 grads, score 70+”"
               className="h-11 pl-10"
+              inputMode="search"
+              autoComplete="off"
               aria-describedby="nl-search-hint"
               maxLength={300}
             />
@@ -188,7 +190,7 @@ export function SearchView({
             <Select value={sort} onValueChange={(v) => patch({ sort: v as SearchSort })}>
               <SelectTrigger className="h-11 w-auto min-w-40" aria-label="Sort by">
                 <ArrowUpDown className="size-4 text-subtle" aria-hidden />
-                <SelectValue />
+                <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
                 {(Object.keys(SORT_LABEL) as SearchSort[]).map((s) => (
@@ -575,7 +577,7 @@ function FilterRail({
         <Label htmlFor={`${uid}-loc`} className="sr-only">
           Location
         </Label>
-        <Input id={`${uid}-loc`} value={filters.location ?? ""} onChange={(e) => patch({ location: e.target.value || undefined })} placeholder="e.g. Pune" />
+        <Input id={`${uid}-loc`} value={filters.location ?? ""} onChange={(e) => patch({ location: e.target.value || undefined })} placeholder="e.g. Pune" autoComplete="off" />
       </FilterGroup>
     </div>
   );
@@ -703,7 +705,7 @@ function SaveSearchDialog({
           }}
         >
           <Field label="Name" htmlFor="saved-name" error={error}>
-            <Input id="saved-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="React, 70+, live app" autoFocus aria-invalid={!!error} />
+            <Input id="saved-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. React, 70+, live app" autoComplete="off" autoFocus aria-invalid={!!error} />
           </Field>
           <DialogFooter className="mt-5">
             <Button type="submit" loading={pending}>

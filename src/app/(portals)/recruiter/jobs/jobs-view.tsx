@@ -225,19 +225,19 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
         }}
       >
         <Field label="Title" htmlFor="job-title" error={errors.title} className="sm:col-span-2">
-          <Input id="job-title" value={form.title} onChange={(e) => set("title", e.target.value)} aria-invalid={!!errors.title} />
+          <Input id="job-title" placeholder="e.g. Frontend intern" autoComplete="off" value={form.title} onChange={(e) => set("title", e.target.value)} aria-invalid={!!errors.title} />
         </Field>
         <Field label="Description" htmlFor="job-desc" error={errors.description} className="sm:col-span-2">
-          <Textarea id="job-desc" value={form.description} onChange={(e) => set("description", e.target.value)} aria-invalid={!!errors.description} />
+          <Textarea id="job-desc" placeholder="What they will build, the stack, and who they work with." value={form.description} onChange={(e) => set("description", e.target.value)} aria-invalid={!!errors.description} />
         </Field>
         <Field label="Location" htmlFor="job-loc" error={errors.location}>
-          <Input id="job-loc" value={form.location} onChange={(e) => set("location", e.target.value)} aria-invalid={!!errors.location} />
+          <Input id="job-loc" placeholder="e.g. Bengaluru or Remote" autoComplete="off" value={form.location} onChange={(e) => set("location", e.target.value)} aria-invalid={!!errors.location} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Mode" htmlFor="job-mode">
             <Select value={form.workMode} onValueChange={(v) => set("workMode", v as Job["workMode"])}>
               <SelectTrigger id="job-mode">
-                <SelectValue />
+                <SelectValue placeholder="Choose a work mode" />
               </SelectTrigger>
               <SelectContent>
                 {JOB_WORK_MODES.map((m) => (
@@ -251,7 +251,7 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
           <Field label="Type" htmlFor="job-type">
             <Select value={form.employmentType} onValueChange={(v) => set("employmentType", v as Job["employmentType"])}>
               <SelectTrigger id="job-type">
-                <SelectValue />
+                <SelectValue placeholder="Choose a role type" />
               </SelectTrigger>
               <SelectContent>
                 {JOB_TYPES.map((t) => (
@@ -263,17 +263,17 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
             </Select>
           </Field>
         </div>
-        <Field label={form.employmentType === "internship" ? "Stipend min (₹/month)" : "CTC min (₹/year)"} htmlFor="job-min" error={errors.salaryMin}>
-          <Input id="job-min" inputMode="numeric" value={form.salaryMin} onChange={(e) => set("salaryMin", e.target.value.replace(/\D/g, ""))} />
+        <Field label={form.employmentType === "internship" ? "Stipend min (₹/month)" : "CTC min (₹/year)"} htmlFor="job-min" error={errors.salaryMin} hint="Digits only, in rupees.">
+          <Input id="job-min" inputMode="numeric" autoComplete="off" placeholder={form.employmentType === "internship" ? "e.g. 25000" : "e.g. 600000"} value={form.salaryMin} onChange={(e) => set("salaryMin", e.target.value.replace(/\D/g, ""))} />
         </Field>
-        <Field label={form.employmentType === "internship" ? "Stipend max (₹/month)" : "CTC max (₹/year)"} htmlFor="job-max" error={errors.salaryMax}>
-          <Input id="job-max" inputMode="numeric" value={form.salaryMax} onChange={(e) => set("salaryMax", e.target.value.replace(/\D/g, ""))} aria-invalid={!!errors.salaryMax} />
+        <Field label={form.employmentType === "internship" ? "Stipend max (₹/month)" : "CTC max (₹/year)"} htmlFor="job-max" error={errors.salaryMax} hint="Digits only, in rupees.">
+          <Input id="job-max" inputMode="numeric" autoComplete="off" placeholder={form.employmentType === "internship" ? "e.g. 40000" : "e.g. 1200000"} value={form.salaryMax} onChange={(e) => set("salaryMax", e.target.value.replace(/\D/g, ""))} aria-invalid={!!errors.salaryMax} />
         </Field>
         <Field label={`Minimum Proof Score: ${form.minProofScore}`} htmlFor="job-score">
           <input id="job-score" type="range" min={0} max={95} step={5} value={form.minProofScore} onChange={(e) => set("minProofScore", Number(e.target.value))} className="w-full accent-[var(--lime)]" />
         </Field>
         <Field label="Openings" htmlFor="job-openings" error={errors.openings}>
-          <Input id="job-openings" type="number" min={1} max={500} value={form.openings} onChange={(e) => set("openings", Number(e.target.value))} />
+          <Input id="job-openings" type="number" inputMode="numeric" placeholder="e.g. 3" min={1} max={500} value={form.openings} onChange={(e) => set("openings", Number(e.target.value))} />
         </Field>
         <div className="grid gap-2 sm:col-span-2">
           <span className="text-[13px] font-medium">Required verified skills</span>
@@ -294,6 +294,7 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
                       inputMode="numeric"
                       min={0}
                       max={100}
+                      placeholder="50"
                       value={r.minScore}
                       aria-label={`Minimum ${name} score`}
                       onChange={(e) =>

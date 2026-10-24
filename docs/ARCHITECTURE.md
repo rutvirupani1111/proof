@@ -49,6 +49,7 @@ src/
     auth/guard.ts        requireRole / requireUser / assertRole / getCurrentUser   <- THE guard
     secrets.ts           getOrCreateSecret(): generated-once secrets in app_secrets
     demo/actions.ts      demoSignIn(): one-tap demo logins, only when NEXT_PUBLIC_DEMO_MODE=true (lib/demo.ts)
+    email/               THE mail adapter: sendEmail(), Resend + on-screen fallback, rate limits, templates
     <area>/queries.ts    reads, scoped by role and ownership
     <area>/actions.ts    "use server" mutations (create when needed)
   proxy.ts               optimistic cookie check for portal routes
@@ -108,6 +109,16 @@ drizzle/                 generated SQL migrations (commit them)
   or `mentors.domain_verified_at`. Client input cannot set it (`input: false`).
 - Students get a `student_profiles` row with a unique handle in the `create.after` hook.
 - Sign-in is rate-limited by Better Auth in production (3 attempts per 10 s per IP).
+- **Email verification:** the `emailOTP` plugin (`src/server/auth/email-otp.ts`) sends a 6-digit
+  code on sign-up (`emailVerification.sendOnSignUp`). `requireRole` / `requireUser` redirect an
+  unverified account to `/verify-email`; `assertRole` throws 403. Password reset is
+  `/forgot-password` then `/reset-password` (emailOTP `forget-password`), with
+  `revokeSessionsOnPasswordReset`. OTPs are stored hashed in `verifications`.
+- **Email** only through `src/server/email` (`sendEmail`). It needs `RESEND_API_KEY` **and**
+  `EMAIL_FROM` (env only, never hardcoded). Not configured, or the sender domain rejected: the
+  code / link is recorded in `email_deliveries.reveal` and shown on screen in demo mode or
+  development, otherwise the action returns a friendly error. Screens read the outcome with
+  `verificationCodeStatus()` / `resetCodeStatus()` (`src/server/email/actions.ts`).
 
 ## Data model
 

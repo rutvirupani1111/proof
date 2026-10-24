@@ -30,10 +30,17 @@ function allowed(role: Role, roles: Role | Role[]): boolean {
   return role === "admin" || list.includes(role);
 }
 
-/** For pages/layouts: redirects to /login (signed out) or the user's own portal (wrong role). */
+/** Where an unverified account is sent: the 6-digit sign-up code screen. */
+export const VERIFY_EMAIL_PATH = "/verify-email";
+
+/**
+ * For pages/layouts: redirects to /login (signed out), /verify-email (email not confirmed yet)
+ * or the user's own portal (wrong role).
+ */
 export async function requireRole(roles: Role | Role[], nextPath?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login");
+  if (!user.emailVerified) redirect(VERIFY_EMAIL_PATH);
   if (!allowed(user.role, roles)) redirect(homeFor(user.role));
   return user;
 }
@@ -41,6 +48,7 @@ export async function requireRole(roles: Role | Role[], nextPath?: string): Prom
 export async function requireUser(nextPath?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login");
+  if (!user.emailVerified) redirect(VERIFY_EMAIL_PATH);
   return user;
 }
 
@@ -57,6 +65,7 @@ export class AuthError extends Error {
 export async function assertRole(roles: Role | Role[]): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) throw new AuthError(401, "Sign in required.");
+  if (!user.emailVerified) throw new AuthError(403, "Verify your email address first.");
   if (!allowed(user.role, roles)) throw new AuthError(403, "Not allowed for your role.");
   return user;
 }

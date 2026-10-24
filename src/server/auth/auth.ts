@@ -3,12 +3,17 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { eq } from "drizzle-orm";
 import { getDb, type Db } from "@/db";
 import { accounts, sessions, studentProfiles, users, verifications } from "@/db/schema";
-import { DOMAIN_VERIFIED_ROLES, SIGNUP_ROLES, type Role } from "@/lib/auth/roles";
+import { DOMAIN_VERIFIED_ROLES, SIGNUP_ROLES, homeFor, isRole, type Role } from "@/lib/auth/roles";
 import { emailDomain, slugifyHandle } from "@/lib/handle";
 import { getAuthSecret } from "@/server/secrets";
+import { sendEmail, welcomeEmail } from "@/server/email";
+import { emailOtpOptions } from "./email-otp";
+
+export { OTP_ATTEMPTS, OTP_EXPIRES_IN } from "./email-otp";
 
 /** This deployment's own Vercel hosts: production domain first, then deployment + branch URLs. */
 function vercelHosts(): string[] {
@@ -31,6 +36,20 @@ function baseURL() {
   const hosts = vercelHosts();
   if (!hosts.length) return undefined;
   return { allowedHosts: hosts, fallback: `https://${hosts[0]}`, protocol: "https" as const };
+}
+
+/** Absolute origin for links in emails: BETTER_AUTH_URL, else the request, else Vercel, else local. */
+export function publicOrigin(request?: Request): string {
+  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL.replace(/\/$/, "");
+  if (request?.url) {
+    try {
+      return new URL(request.url).origin;
+    } catch {
+      // Relative URL: fall through.
+    }
+  }
+  const host = vercelHosts()[0];
+  return host ? `https://${host}` : "http://localhost:5190";
 }
 
 function staticTrustedOrigins(): string[] {
@@ -84,6 +103,22 @@ function createAuth(db: Db, secret: string) {
       enabled: true,
       minPasswordLength: 8,
       autoSignIn: true,
+      // A reset signs the account out everywhere (the reset itself happens signed out).
+      revokeSessionsOnPasswordReset: true,
+    },
+    emailVerification: {
+      // emailOTP overrides the default verification email, so this sends the 6-digit code.
+      sendOnSignUp: true,
+      // One-time welcome once the sign-up code is confirmed (rate limit: 1 per address per day).
+      afterEmailVerification: async (user, request) => {
+        const role = (user as { role?: string }).role;
+        const origin = publicOrigin(request);
+        await sendEmail({
+          to: user.email,
+          template: "welcome",
+          ...welcomeEmail({ name: user.name, role: role ?? "student", portalUrl: `${origin}${homeFor(isRole(role) ? role : "student")}` }),
+        }).catch((err) => console.error("[email] welcome failed", err));
+      },
     },
     user: {
       additionalFields: {
@@ -135,7 +170,10 @@ function createAuth(db: Db, secret: string) {
         },
       },
     },
-    plugins: [nextCookies()],
+    plugins: [
+      emailOTP(emailOtpOptions(sendEmail)),
+      nextCookies(),
+    ],
   });
 }
 

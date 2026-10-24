@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { signUp } from "@/lib/auth/client";
-import { homeFor, SIGNUP_ROLES, type SignupRole } from "@/lib/auth/roles";
+import { SIGNUP_ROLES, type SignupRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import { fieldErrors, signupSchema } from "@/lib/validation/auth";
 
@@ -72,7 +72,8 @@ export function SignupForm() {
       setPending(false);
       return setErrors({ form: error.message ?? "Could not create your account." });
     }
-    router.replace(homeFor(parsed.data.role));
+    // New accounts confirm their email with the 6-digit code before any portal opens.
+    router.replace("/verify-email");
     router.refresh();
   }
 

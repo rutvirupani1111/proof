@@ -61,6 +61,9 @@ export function LoginForm() {
             aria-invalid={!!errors.password}
           />
         </Field>
+        <Link href="/forgot-password" className="-mt-2 justify-self-end text-sm text-muted underline-offset-4 hover:text-violet-text hover:underline">
+          Forgot password?
+        </Link>
         {errors.form && (
           <p role="alert" className="rounded-xl border border-coral/30 bg-coral-soft px-3 py-2 text-sm text-coral-text">
             {errors.form}

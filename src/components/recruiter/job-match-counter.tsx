@@ -69,7 +69,7 @@ export function JobMatchCounter({ skills, minScore }: { skills: { skillSlug: str
         </p>
       </div>
       <div className="flex items-center gap-3">
-        <ul className="flex -space-x-2" aria-label="Top matches">
+        <ul className="relative flex -space-x-2" aria-label="Top matches">
           <AnimatePresence initial={false} mode="popLayout">
             {(data?.sample ?? []).map((p, i) => (
               <motion.li

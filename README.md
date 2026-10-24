@@ -24,6 +24,18 @@ npm run dev          # http://localhost:5190
 Other scripts: `npm run build`, `npm start` (port 5190), `npm run typecheck`, `npm run lint`,
 `npm run db:generate` (after schema changes), `npm run db:reset` (wipe local DB, migrate, seed).
 
+### Local database (PGlite)
+
+Without `DATABASE_URL` the app uses PGlite, an in-process Postgres stored in `.data/pglite`.
+It is single-process: each Node process opens one shared instance, and a pid lock file
+(`.data/pglite.lock`) stops a second process from opening the same directory. If you see
+"in use by another process", stop the other dev server, `next start` or script first.
+
+If the server crashes with `RuntimeError: Aborted()` or reports that the local database
+"could not be opened", the data directory was corrupted (usually two processes writing it at
+once, or a process killed mid-write). Stop the server and run `npm run db:reset`: it deletes
+`.data/pglite`, re-applies the migrations and re-seeds the demo data.
+
 ## Demo logins
 
 Every seeded account uses the password **`proof-demo-2026`** (local and the deployed showcase).

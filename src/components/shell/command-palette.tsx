@@ -76,7 +76,8 @@ export function CommandPalette({
             <Kbd>esc</Kbd>
           </div>
           <Command.List className="max-h-[50vh] overflow-y-auto p-2">
-            <Command.Empty className="px-3 py-8 text-center text-sm text-muted">Nothing matches.</Command.Empty>
+            {/* cmdk counts forceMount items as filtered out, so "Nothing matches." would sit above the Find row. */}
+            {!(talent && preview) && <Command.Empty className="px-3 py-8 text-center text-sm text-muted">Nothing matches.</Command.Empty>}
             {talent && preview && (
               <Command.Group
                 forceMount

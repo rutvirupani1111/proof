@@ -33,9 +33,10 @@ export function TalentChips({
   className?: string;
   size?: "sm" | "md";
 }) {
-  // Always mounted (and hidden once empty) so the last chip can animate out.
+  // Always mounted (and hidden once empty) so the last chip can animate out. `relative` because
+  // popLayout takes exiting chips out of flow with absolute positioning against this list.
   return (
-    <ul className={cn("flex flex-wrap items-center gap-1.5 empty:hidden", className)} aria-label="Understood from your search">
+    <ul className={cn("relative flex flex-wrap items-center gap-1.5 empty:hidden", className)} aria-label="Understood from your search">
       <AnimatePresence initial={false} mode="popLayout">
         {chips.map((c) => {
           const k = KIND[c.kind];

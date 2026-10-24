@@ -22,11 +22,13 @@ import { SealGlyph } from "@/components/ui/seal-glyph";
 import { cn, timeAgo } from "@/lib/utils";
 import { PIPELINE_STAGE_LABEL } from "@/lib/validation/recruiter";
 import { CandidateStoryCard } from "@/components/recruiter/candidate-story";
+import { InterviewKitPreview } from "@/components/recruiter/interview-kit";
 import { ContactUnlockCard } from "@/components/billing/contact-unlock";
 import { requireRole } from "@/server/auth/guard";
 import { getContactUnlock } from "@/server/billing/queries";
 import { getStripe } from "@/server/billing/stripe";
 import { buildCandidateStory } from "@/server/recruiter/candidate-story";
+import { buildInterviewKit, kitInputFrom } from "@/server/recruiter/interview-kit";
 import { getCandidate, getJobForStory, getJobOptions, getPublishedChecks, getShortlistOptions } from "@/server/recruiter/queries";
 import { recruiterScopeOf } from "@/server/recruiter/scope";
 import { ScoreRing } from "../../_components/score-ring";
@@ -96,6 +98,7 @@ export default async function CandidatePage({
     },
     storyJob,
   );
+  const kit = buildInterviewKit(kitInputFrom(c));
   const b = c.profile.scoreBreakdown;
   const parts = b
     ? [
@@ -186,6 +189,8 @@ export default async function CandidatePage({
             job={storyJob ? { id: storyJob.id, title: storyJob.title } : null}
             jobs={jobs.filter((j) => j.status !== "closed")}
           />
+
+          <InterviewKitPreview kit={kit} candidateId={c.user.id} firstName={c.user.name.split(" ")[0] || c.user.name} />
 
           {/* Verified skills */}
           <Card id="evidence-skills" className="scroll-mt-24">

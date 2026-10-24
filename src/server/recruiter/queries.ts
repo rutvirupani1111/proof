@@ -92,6 +92,7 @@ export async function getCandidate(scope: RecruiterScope | null, studentUserId: 
       .select({
         id: evidence.id,
         kind: evidence.kind,
+        sourceId: evidence.sourceId,
         title: evidence.title,
         summary: evidence.summary,
         skillSlugs: evidence.skillSlugs,

@@ -6,6 +6,7 @@ import {
   CalendarRange,
   ClipboardList,
   Code2,
+  CreditCard,
   FileBarChart,
   GraduationCap,
   Inbox,
@@ -72,6 +73,7 @@ export const NAV: Record<Portal, NavSection[]> = {
         { label: "Jobs", href: "/recruiter/jobs", icon: Briefcase },
         { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
         { label: "Company", href: "/recruiter/company", icon: Building2 },
+        { label: "Billing", href: "/recruiter/billing", icon: CreditCard },
       ],
     },
   ],
@@ -86,7 +88,12 @@ export const NAV: Record<Portal, NavSection[]> = {
         { label: "Nudges", href: "/college/nudges", icon: Sparkles },
       ],
     },
-    { items: [{ label: "College settings", href: "/college/settings", icon: GraduationCap }] },
+    {
+      items: [
+        { label: "College settings", href: "/college/settings", icon: GraduationCap },
+        { label: "Billing", href: "/college/billing", icon: CreditCard },
+      ],
+    },
   ],
   mentor: [
     { items: [{ label: "Dashboard", href: "/mentor", icon: LayoutDashboard }] },

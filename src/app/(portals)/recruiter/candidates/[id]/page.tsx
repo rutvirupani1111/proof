@@ -22,7 +22,10 @@ import { SealGlyph } from "@/components/ui/seal-glyph";
 import { cn, timeAgo } from "@/lib/utils";
 import { PIPELINE_STAGE_LABEL } from "@/lib/validation/recruiter";
 import { CandidateStoryCard } from "@/components/recruiter/candidate-story";
+import { ContactUnlockCard } from "@/components/billing/contact-unlock";
 import { requireRole } from "@/server/auth/guard";
+import { getContactUnlock } from "@/server/billing/queries";
+import { getStripe } from "@/server/billing/stripe";
 import { buildCandidateStory } from "@/server/recruiter/candidate-story";
 import { getCandidate, getJobForStory, getJobOptions, getPublishedChecks, getShortlistOptions } from "@/server/recruiter/queries";
 import { recruiterScopeOf } from "@/server/recruiter/scope";
@@ -79,6 +82,8 @@ export default async function CandidatePage({
         typeof jobParam === "string" && jobParam.length <= 64 ? getJobForStory(scope, jobParam) : Promise.resolve(null),
       ])
     : [[], [], [], null];
+  const contact = scope ? await getContactUnlock({ type: "company", id: scope.companyId }, c.user.id) : null;
+  const billingMode = getStripe() ? "stripe" : "demo";
   const story = buildCandidateStory(
     {
       firstName: c.user.name.split(" ")[0] || c.user.name,
@@ -372,6 +377,16 @@ export default async function CandidatePage({
                     ))}
                   </ul>
                 </Card>
+              )}
+              {contact && (
+                <ContactUnlockCard
+                  studentUserId={c.user.id}
+                  firstName={c.user.name.split(" ")[0] ?? c.user.name}
+                  unlocked={contact.unlocked}
+                  email={contact.email}
+                  usage={contact.usage}
+                  mode={billingMode}
+                />
               )}
               <CandidateActions
                 studentUserId={c.user.id}

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, CheckCheck, SendHorizontal } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { springs } from "@/components/motion/transitions";
 import { Avatar } from "@/components/ui/avatar";
@@ -27,6 +28,7 @@ export function ThreadView({
   /** Composer placeholder while sending is not allowed. */
   lockedHint?: string;
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState(initial);
   const [draft, setDraft] = useState("");
   const [pending, start] = useTransition();
@@ -48,7 +50,7 @@ export function ThreadView({
       else {
         setMessages((m) => m.filter((x) => x.id !== temp.id));
         setDraft(body);
-        toast.error(res.error);
+        toast.error(res.error, res.error.includes("Upgrade in Billing") ? { action: { label: "See plans", onClick: () => router.push("/recruiter/billing") } } : undefined);
       }
     });
   };

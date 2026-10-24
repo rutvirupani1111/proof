@@ -857,6 +857,80 @@ export const appSecrets = pgTable("app_secrets", {
 });
 
 /* -------------------------------------------------------------------------- */
+/* Billing (Stripe). Plan state is written ONLY by the webhook handler.       */
+/* -------------------------------------------------------------------------- */
+
+/** A company (recruiters) or a college (placement cell) mapped to its Stripe customer. */
+export const billingCustomers = pgTable(
+  "billing_customers",
+  {
+    id: id(),
+    /** "company" | "college"; `owner_id` points at companies.id or colleges.id. */
+    ownerType: text("owner_type").notNull(),
+    ownerId: text("owner_id").notNull(),
+    stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+    /** Lookup keys from the latest entitlements.active_entitlement_summary.updated event. */
+    entitlements: jsonb("entitlements").$type<string[]>().notNull().default([]),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("billing_customers_owner_uq").on(t.ownerType, t.ownerId)],
+);
+
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: id(),
+    ownerType: text("owner_type").notNull(),
+    ownerId: text("owner_id").notNull(),
+    stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    /** PlanId from src/lib/billing/plans.ts. */
+    plan: text("plan").notNull(),
+    /** Stripe subscription status: active, trialing, past_due, canceled, incomplete, ... */
+    status: text("status").notNull(),
+    seats: integer("seats").notNull().default(1),
+    currentPeriodEnd: ts("current_period_end"),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    /** Stripe event `created` of the last applied change, so an older delivery never wins. */
+    stripeEventAt: ts("stripe_event_at"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("subscriptions_owner_idx").on(t.ownerType, t.ownerId, t.status)],
+);
+
+/** Webhook idempotency: one row per Stripe event id we have applied. */
+export const processedStripeEvents = pgTable("processed_stripe_events", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  processedAt: createdAt(),
+});
+
+/** Metered usage. A candidate unlock is counted once per company and candidate. */
+export const usageEvents = pgTable(
+  "usage_events",
+  {
+    id: id(),
+    ownerType: text("owner_type").notNull(),
+    ownerId: text("owner_id").notNull(),
+    actorUserId: text("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    /** "candidate_unlock" */
+    kind: text("kind").notNull(),
+    subjectId: text("subject_id").notNull(),
+    /** Beyond the plan allowance: reported to the Stripe meter. */
+    billable: boolean("billable").notNull().default(false),
+    /** Meter event identifier once Stripe accepted it ("demo:..." in demo mode). */
+    reportedAt: ts("reported_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("usage_events_owner_kind_subject_uq").on(t.ownerType, t.ownerId, t.kind, t.subjectId),
+    index("usage_events_owner_created_idx").on(t.ownerType, t.ownerId, t.createdAt),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
 /* Relations (for db.query.* with `with`)                                     */
 /* -------------------------------------------------------------------------- */
 

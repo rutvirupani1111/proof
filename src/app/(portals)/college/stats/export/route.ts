@@ -1,5 +1,6 @@
 import { AuthError, assertRole } from "@/server/auth/guard";
 import { getCollege, getPlacementStats, placementsCsv } from "@/server/college/queries";
+import { collegeCanExport } from "@/server/billing/queries";
 import { collegeScopeOf } from "@/server/college/scope";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,9 @@ export async function GET() {
     const user = await assertRole("college");
     const scope = collegeScopeOf(user);
     if (!scope) return new Response("No college linked to this account.", { status: 403 });
+    if (!(await collegeCanExport({ type: "college", id: scope.collegeId }))) {
+      return new Response("CSV export is part of the College Campus plan. Upgrade in Billing.", { status: 402 });
+    }
     const [college, stats] = await Promise.all([getCollege(scope), getPlacementStats(scope)]);
     const slug = college?.slug ?? "college";
     const date = new Date().toISOString().slice(0, 10);

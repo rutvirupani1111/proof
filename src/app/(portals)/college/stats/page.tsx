@@ -1,7 +1,6 @@
-import { Award, Building, Download, TrendingUp, Users } from "lucide-react";
+import { Award, Building, TrendingUp, Users } from "lucide-react";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Stat } from "@/components/ui/stat";
@@ -9,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { requireRole } from "@/server/auth/guard";
 import { getPlacementStats } from "@/server/college/queries";
 import { collegeScopeOf } from "@/server/college/scope";
+import { ExportCsvButton } from "@/components/billing/contact-unlock";
+import { collegeCanExport } from "@/server/billing/queries";
+import { getStripe } from "@/server/billing/stripe";
 import { NoCollege } from "../_components/no-college";
 
 export const metadata: Metadata = { title: "Placement stats" };
@@ -24,7 +26,7 @@ export default async function StatsPage() {
       </>
     );
   }
-  const s = await getPlacementStats(scope);
+  const [s, canExport] = await Promise.all([getPlacementStats(scope), collegeCanExport({ type: "college", id: scope.collegeId })]);
   const rate = s.totals.students ? Math.round((s.totals.placed / s.totals.students) * 100) : 0;
 
   return (
@@ -34,11 +36,7 @@ export default async function StatsPage() {
         title="Placement stats"
         description="Offers from drives and from Proof job applications, by branch and year."
         actions={
-          <Button variant="secondary" asChild>
-            <a href="/college/stats/export" download>
-              <Download /> Export CSV
-            </a>
-          </Button>
+          <ExportCsvButton allowed={canExport} mode={getStripe() ? "stripe" : "demo"} />
         }
       />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

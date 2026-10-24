@@ -48,7 +48,7 @@ export default function PricingPage() {
           <div className="mt-12">
             <PricingPlans />
           </div>
-          <p className="mt-6 text-center font-mono text-[11px] text-subtle">Illustrative pricing for this demo build. Prices in INR, exclusive of GST.</p>
+          <p className="mt-6 text-center font-mono text-[11px] text-subtle">Prices in INR, exclusive of GST. Payments run in Stripe test mode: use card 4242 4242 4242 4242.</p>
         </div>
       </section>
 

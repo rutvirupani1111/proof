@@ -116,6 +116,8 @@
   --animate-sheet-in-right: sheet-in-right 280ms var(--ease-out-quint);
   --animate-sheet-out-right: sheet-out-right 200ms ease-in;
   --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-sheet-in-bottom: sheet-in-bottom 320ms var(--ease-out-quint);
+  --animate-sheet-out-bottom: sheet-out-bottom 200ms ease-in;
 }
 
 @keyframes fade-in {
@@ -141,6 +143,12 @@
 }
 @keyframes sheet-out-right {
   to { transform: translateX(100%); }
+}
+@keyframes sheet-in-bottom {
+  from { transform: translateY(100%); }
+}
+@keyframes sheet-out-bottom {
+  to { transform: translateY(100%); }
 }
 @keyframes shimmer {
   from { background-position: 200% 0; }

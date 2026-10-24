@@ -15,6 +15,13 @@
       "when": 1792796863203,
       "tag": "0001_overrated_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792802137510,
+      "tag": "0002_billing",
+      "breakpoints": true
     }
   ]
 }

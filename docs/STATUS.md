@@ -216,7 +216,41 @@ Components: `src/components/landing/`, `src/components/profile/`; verify-only pi
 - **Marketing**: `/for-recruiters` (interactive fictional evidence search whose results re-sort
   with layout animations), `/for-colleges` (readiness vignette, features, rollout), `/pricing`
   (Free for students forever; Hiring team per seat; Placement cell per campus; monthly / yearly
-  toggle; prices are illustrative), `/about` (story, principles, demo-data note).
+  toggle replaced by monthly Stripe plans; see Billing), `/about` (story, principles, demo-data note).
+
+## Billing: Stripe subscriptions, meter, webhooks (built)
+
+- Catalogue in `src/lib/billing/plans.ts`: Recruiter Starter ₹2,999/seat/month, Recruiter Growth
+  ₹7,999/seat/month, College Campus ₹24,999/month, plus metered overage ₹49 per candidate unlock
+  (Billing Meter `candidate_unlocks`, sum of `value`, customer by `stripe_customer_id`).
+  `src/server/billing/catalog.ts` finds or creates them idempotently (custom product ids, prices
+  by lookup key). Runs on first checkout, in `vercel-build` (`scripts/stripe-sync.ts --build`,
+  production only, never fails the build) and via `npm run stripe:sync`.
+- Webhook endpoint self-registers in production at
+  `https://$VERCEL_PROJECT_PRODUCTION_URL/api/stripe/webhook` for checkout.session.completed,
+  customer.subscription.created/updated/deleted, invoice.paid, invoice.payment_failed and
+  entitlements.active_entitlement_summary.updated. Its signing secret is stored in `app_secrets`
+  (`stripe_webhook_endpoint`), never env. An endpoint at the URL whose secret we do not hold is
+  replaced; duplicates from a concurrent bootstrap are removed.
+- The route verifies `Stripe-Signature` (400 when missing or invalid), claims the event id in
+  `processed_stripe_events` before applying (duplicates return 200 `duplicate`; failures release
+  the claim and return 500 so Stripe retries), and ignores deliveries older than the stored state.
+- Schema (`drizzle/0002_billing.sql`): `billing_customers`, `subscriptions`,
+  `processed_stripe_events`, `usage_events`. Plan state is written only by webhook processing.
+- UI: `/recruiter/billing` and `/college/billing` (current plan, seats, renew date, live usage
+  meter, plan grid, upgrade sheet with seat stepper, Stripe Checkout in subscription mode,
+  "Manage billing" via the Customer Portal; after checkout the page polls until the webhook lands).
+  Candidate page has a Contact details card (masked until unlocked). Starting a new conversation
+  also unlocks the candidate. Free recruiters are capped at 5 unlocks a month and get the upgrade
+  sheet; paid plans report one meter event per over-allowance unlock (identifier = usage row id).
+  College stats CSV export needs College Campus (route returns 402 otherwise). Pricing page buttons
+  start checkout for signed-in recruiters and colleges.
+- Demo mode (no `STRIPE_SECRET_KEY`): `/<portal>/billing/demo-checkout` is a labelled stand-in
+  that pushes synthetic events through the same `processStripeEvent` path.
+- Tests: `src/server/billing/billing.test.ts` (mocked Stripe, in-memory store): catalogue
+  idempotency, webhook endpoint create/reuse/replace, signature rejection, event idempotency and
+  ordering, plan gating, meter reporting.
+- Test card: **4242 4242 4242 4242**, any future expiry, any CVC.
 
 ## Not built yet (by area)
 

@@ -277,24 +277,47 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
         </Field>
         <div className="grid gap-2 sm:col-span-2">
           <span className="text-[13px] font-medium">Required verified skills</span>
-          <ul className="flex flex-wrap gap-2">
-            {form.requiredSkills.map((r, i) => (
-              <li key={r.skillSlug} className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-2 py-1 pr-1 pl-2.5 text-sm">
-                {skills.find((s) => s.slug === r.skillSlug)?.name ?? r.skillSlug}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={r.minScore}
-                  aria-label={`Minimum score for ${r.skillSlug}`}
-                  onChange={(e) => set("requiredSkills", form.requiredSkills.map((x, j) => (j === i ? { ...x, minScore: Number(e.target.value) } : x)))}
-                  className="w-14 rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-xs"
-                />
-                <button type="button" aria-label="Remove skill" onClick={() => set("requiredSkills", form.requiredSkills.filter((_, j) => j !== i))} className="grid size-6 place-items-center rounded text-subtle hover:text-coral-text">
-                  <X className="size-3.5" />
-                </button>
-              </li>
-            ))}
+          {/* Phones: one full-width row per skill (name, compact min box, remove). sm+: inline chips. */}
+          <ul className="grid gap-2 sm:flex sm:flex-wrap">
+            {form.requiredSkills.map((r, i) => {
+              const name = skills.find((s) => s.slug === r.skillSlug)?.name ?? r.skillSlug;
+              return (
+                <li
+                  key={r.skillSlug}
+                  className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-surface-2 py-1 pr-1 pl-3 text-sm sm:inline-flex sm:pl-2.5"
+                >
+                  <span className="min-w-0 flex-1 truncate sm:flex-none">{name}</span>
+                  <label className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] text-subtle">
+                    <span aria-hidden>min</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      value={r.minScore}
+                      aria-label={`Minimum ${name} score`}
+                      onChange={(e) =>
+                        set(
+                          "requiredSkills",
+                          form.requiredSkills.map((x, j) =>
+                            j === i ? { ...x, minScore: Math.max(0, Math.min(100, Number(e.target.value) || 0)) } : x,
+                          ),
+                        )
+                      }
+                      className="h-8 min-h-0 w-12 min-w-0 rounded-md border border-line bg-surface px-1 text-center font-mono text-[13px] text-ink sm:h-6 sm:w-11 sm:text-xs"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${name}`}
+                    onClick={() => set("requiredSkills", form.requiredSkills.filter((_, j) => j !== i))}
+                    className="grid size-8 min-h-0 min-w-0 shrink-0 place-items-center rounded text-subtle hover:text-coral-text sm:size-6"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           {form.requiredSkills.length < 8 && (
             <Select

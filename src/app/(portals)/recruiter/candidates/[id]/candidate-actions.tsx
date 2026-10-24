@@ -103,7 +103,7 @@ export function CandidateActions({
         <ActionRow icon={KanbanSquare} label="Pipeline">
           <Select value={jobId} onValueChange={setJobId}>
             <SelectTrigger aria-label="Job for the pipeline card" className="h-9">
-              <SelectValue />
+              <SelectValue placeholder="Choose a job" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">General pipeline</SelectItem>
@@ -122,7 +122,7 @@ export function CandidateActions({
         <ActionRow icon={ListPlus} label="Shortlist">
           <Select value={listId} onValueChange={setListId}>
             <SelectTrigger aria-label="Shortlist" className="h-9">
-              <SelectValue />
+              <SelectValue placeholder="Choose a shortlist" />
             </SelectTrigger>
             <SelectContent>
               {available.map((l) => (
@@ -151,7 +151,7 @@ export function CandidateActions({
           <ActionRow icon={ClipboardCheck} label="Skill check">
             <Select value={checkId} onValueChange={setCheckId}>
               <SelectTrigger aria-label="Skill check to invite to" className="h-9">
-                <SelectValue />
+                <SelectValue placeholder="Choose a skill check" />
               </SelectTrigger>
               <SelectContent>
                 {checks.map((k) => (

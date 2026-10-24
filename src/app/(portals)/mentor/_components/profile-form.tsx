@@ -81,7 +81,8 @@ export function MentorProfileForm({ initial, domain, isNew }: { initial: Initial
         </div>
       </fieldset>
       <Field label="Title" htmlFor="title" error={errors.title}>
-        <Input id="title" name="title" defaultValue={initial.title} placeholder="Associate Professor, Computer Engineering" aria-invalid={!!errors.title} />
+        <Input id="title" name="title" defaultValue={initial.title} placeholder="e.g. Associate Professor, Computer Engineering"
+            autoComplete="organization-title" aria-invalid={!!errors.title} />
       </Field>
       <Field
         label={orgType === "college" ? "College" : "Company"}
@@ -89,7 +90,8 @@ export function MentorProfileForm({ initial, domain, isNew }: { initial: Initial
         error={errors.organization}
         hint={`Your account email is at @${domain}; that is the domain we verify.`}
       >
-        <Input id="organization" name="organization" defaultValue={initial.organization} placeholder={orgType === "college" ? "Sardar Patel Institute of Technology, Surat" : "Kitecode Labs"} aria-invalid={!!errors.organization} />
+        <Input id="organization" name="organization" defaultValue={initial.organization} placeholder={orgType === "college" ? "e.g. Sardar Patel Institute of Technology, Surat" : "e.g. Kitecode Labs"}
+            autoComplete="organization" aria-invalid={!!errors.organization} />
       </Field>
       <Field label="Short bio" htmlFor="bio" error={errors.bio} hint="Optional. Shown next to your endorsements.">
         <Textarea id="bio" name="bio" defaultValue={initial.bio} maxLength={400} placeholder="Teaches distributed systems; guides final-year projects." />

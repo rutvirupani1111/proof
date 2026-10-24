@@ -223,16 +223,16 @@ function NewShortlist({ jobs, onCreated }: { jobs: { id: string; title: string }
         }}
       >
         <Field label="Name" htmlFor="sl-name" error={errors.name}>
-          <Input id="sl-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Frontend new grads, 2026" aria-invalid={!!errors.name} />
+          <Input id="sl-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Frontend new grads, 2026" autoComplete="off" aria-invalid={!!errors.name} />
         </Field>
         <Field label="Description" htmlFor="sl-desc" hint="Optional: what the bar is.">
-          <Textarea id="sl-desc" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-16" />
+          <Textarea id="sl-desc" placeholder="e.g. Strong React work, ready for the March drive" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-16" />
         </Field>
         {jobs.length > 0 && (
           <Field label="For job" htmlFor="sl-job">
             <Select value={jobId} onValueChange={setJobId}>
               <SelectTrigger id="sl-job">
-                <SelectValue />
+                <SelectValue placeholder="No specific job" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Not tied to a job</SelectItem>

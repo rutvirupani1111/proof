@@ -173,7 +173,8 @@ function EndorseDialog({
             </DialogHeader>
             <div className="grid gap-4">
               <Field label="How you know their work" htmlFor="relationship" error={errors.relationship}>
-                <Input id="relationship" name="relationship" defaultValue={row.relationship ?? ""} placeholder="Guided their final-year project" aria-invalid={!!errors.relationship} />
+                <Input id="relationship" name="relationship" defaultValue={row.relationship ?? ""} placeholder="e.g. Guided their final-year project"
+                autoComplete="off" aria-invalid={!!errors.relationship} />
               </Field>
               <Field
                 label="Your statement"

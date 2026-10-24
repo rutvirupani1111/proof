@@ -8,35 +8,40 @@ import { useState } from "react";
 import { springs } from "@/components/motion/transitions";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { signUp } from "@/lib/auth/client";
 import { homeFor, SIGNUP_ROLES, type SignupRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import { fieldErrors, signupSchema } from "@/lib/validation/auth";
 
-const ROLE_CARDS: Record<SignupRole, { icon: LucideIcon; title: string; blurb: string; emailHint: string }> = {
+const ROLE_CARDS: Record<SignupRole, { icon: LucideIcon; title: string; blurb: string; emailHint: string; emailPlaceholder: string }> = {
   student: {
     icon: GraduationCap,
     title: "Student",
     blurb: "Prove your skills, get found.",
     emailHint: "Any email works. Your college email links you to your cohort.",
+    emailPlaceholder: "you@college.edu",
   },
   recruiter: {
     icon: Building2,
     title: "Recruiter",
     blurb: "Search verified evidence.",
     emailHint: "Use your work email. We verify your company domain next.",
+    emailPlaceholder: "you@company.com",
   },
   college: {
     icon: Landmark,
     title: "Placement cell",
     blurb: "See who is job-ready.",
     emailHint: "Use your college email. We verify the domain next.",
+    emailPlaceholder: "placements@college.edu",
   },
   mentor: {
     icon: UserRoundCheck,
     title: "Mentor",
     blurb: "Vouch for real work.",
     emailHint: "Use your institutional email (college or company). We verify it next.",
+    emailPlaceholder: "you@college.edu",
   },
 };
 
@@ -113,17 +118,29 @@ export function SignupForm() {
         </fieldset>
 
         <Field label="Full name" htmlFor="name" error={errors.name}>
-          <Input id="name" name="name" autoComplete="name" required aria-invalid={!!errors.name} />
+          <Input id="name" name="name" autoComplete="name" placeholder="e.g. Ishita Varma" required aria-invalid={!!errors.name} />
         </Field>
         <Field label="Email" htmlFor="email" error={errors.email} hint={ROLE_CARDS[role].emailHint}>
-          <Input id="email" name="email" type="email" autoComplete="email" required aria-invalid={!!errors.email} />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder={ROLE_CARDS[role].emailPlaceholder}
+            required
+            aria-invalid={!!errors.email}
+          />
         </Field>
         <Field label="Password" htmlFor="password" error={errors.password} hint="At least 8 characters.">
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="new-password"
+            placeholder="At least 8 characters"
+            minLength={8}
             required
             aria-invalid={!!errors.password}
           />

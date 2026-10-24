@@ -75,7 +75,7 @@ export function DriveControls({ driveId, status, newlyEligible }: { driveId: str
         }}
       >
         <SelectTrigger className="w-52" aria-label="Drive status">
-          <SelectValue />
+          <SelectValue placeholder="Choose a drive status" />
         </SelectTrigger>
         <SelectContent>
           {DRIVE_STATUSES.map((s) => (
@@ -149,7 +149,7 @@ export function DriveRoster({ driveId, rows: initial }: { driveId: string; rows:
             </div>
             <Select value={r.status} onValueChange={(v) => update(r, v as DriveStudentStatusId)}>
               <SelectTrigger className={cn("h-9", r.status === "selected" && "border-verified/50 text-verified")} aria-label={`Status for ${r.name}`}>
-                <SelectValue />
+                <SelectValue placeholder="Set status" />
               </SelectTrigger>
               <SelectContent>
                 {DRIVE_STUDENT_STATUSES.map((s) => (
@@ -163,6 +163,7 @@ export function DriveRoster({ driveId, rows: initial }: { driveId: string; rows:
               defaultValue={r.result ?? ""}
               placeholder={r.status === "selected" ? "Offer, e.g. ₹8.5 LPA" : "Result note"}
               aria-label={`Result for ${r.name}`}
+                autoComplete="off"
               className="h-9"
               onBlur={(e) => {
                 const v = e.target.value.trim();

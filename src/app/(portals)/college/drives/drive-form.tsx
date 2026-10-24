@@ -63,16 +63,16 @@ export function NewDriveButton({ facets }: { facets: Facets }) {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Company" htmlFor="d-company" error={errors.companyName}>
-              <Input id="d-company" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} aria-invalid={!!errors.companyName} />
+              <Input id="d-company" placeholder="e.g. Kitecode Labs" autoComplete="organization" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} aria-invalid={!!errors.companyName} />
             </Field>
             <Field label="Date" htmlFor="d-date" error={errors.scheduledAt}>
               <Input id="d-date" type="datetime-local" value={form.scheduledAt} onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })} aria-invalid={!!errors.scheduledAt} />
             </Field>
             <Field label="Title" htmlFor="d-title" error={errors.title}>
-              <Input id="d-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="SDE campus drive" aria-invalid={!!errors.title} />
+              <Input id="d-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. SDE campus drive" autoComplete="off" aria-invalid={!!errors.title} />
             </Field>
             <Field label="Location" htmlFor="d-loc">
-              <Input id="d-loc" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Seminar Hall 2 / Online" />
+              <Input id="d-loc" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="e.g. Seminar Hall 2 or Online" autoComplete="off" />
             </Field>
           </div>
           <fieldset className="grid gap-3 rounded-xl border border-line bg-surface-2/50 p-4">

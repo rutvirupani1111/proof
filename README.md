@@ -40,6 +40,9 @@ once, or a process killed mid-write). Stop the server and run `npm run db:reset`
 
 Every seeded account uses the password **`proof-demo-2026`** (local and the deployed showcase).
 
+The showcase also has one-tap demo logins on `/login` and a "Switch role" pill; see
+[docs/DEMO.md](docs/DEMO.md) for what to try in each role and the Stripe test card.
+
 | Role | Email | Lands on |
 |---|---|---|
 | Student | `ishita@spit-surat.example` | `/student` (Proof Score computed by the scoring engine from her seeded evidence, public profile `/u/ishita-varma`) |

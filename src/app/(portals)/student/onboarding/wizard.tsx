@@ -226,7 +226,7 @@ export function OnboardingWizard({
                   <Field label="Graduation year" htmlFor="grad" error={errors.graduationYear}>
                     <Select value={graduationYear} onValueChange={setGraduationYear}>
                       <SelectTrigger id="grad">
-                        <SelectValue />
+                        <SelectValue placeholder="Choose a year" />
                       </SelectTrigger>
                       <SelectContent>
                         {years.map((y) => (
@@ -238,7 +238,7 @@ export function OnboardingWizard({
                     </Select>
                   </Field>
                   <Field label="Degree" htmlFor="degree" error={errors.degree}>
-                    <Input id="degree" value={degree} onChange={(e) => setDegree(e.target.value)} placeholder="B.Tech" aria-invalid={!!errors.degree} />
+                    <Input id="degree" value={degree} onChange={(e) => setDegree(e.target.value)} placeholder="e.g. B.Tech" autoComplete="off" aria-invalid={!!errors.degree} />
                   </Field>
                 </div>
                 <Field label="Branch" htmlFor="branch" error={errors.branch}>
@@ -247,7 +247,7 @@ export function OnboardingWizard({
                     list="branch-suggestions"
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
-                    placeholder="Computer Engineering"
+                    placeholder="e.g. Computer Engineering" autoComplete="off"
                     aria-invalid={!!errors.branch}
                   />
                   <datalist id="branch-suggestions">
@@ -281,6 +281,7 @@ export function OnboardingWizard({
                       }
                     }}
                     placeholder="Another role, e.g. Game developer"
+                  autoComplete="off"
                     maxLength={48}
                   />
                   <Button type="button" variant="secondary" onClick={addCustomRole} disabled={customRole.trim().length < 2}>

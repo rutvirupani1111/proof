@@ -225,19 +225,19 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
         }}
       >
         <Field label="Title" htmlFor="job-title" error={errors.title} className="sm:col-span-2">
-          <Input id="job-title" value={form.title} onChange={(e) => set("title", e.target.value)} aria-invalid={!!errors.title} />
+          <Input id="job-title" placeholder="e.g. Frontend intern" autoComplete="off" value={form.title} onChange={(e) => set("title", e.target.value)} aria-invalid={!!errors.title} />
         </Field>
         <Field label="Description" htmlFor="job-desc" error={errors.description} className="sm:col-span-2">
-          <Textarea id="job-desc" value={form.description} onChange={(e) => set("description", e.target.value)} aria-invalid={!!errors.description} />
+          <Textarea id="job-desc" placeholder="What they will build, the stack, and who they work with." value={form.description} onChange={(e) => set("description", e.target.value)} aria-invalid={!!errors.description} />
         </Field>
         <Field label="Location" htmlFor="job-loc" error={errors.location}>
-          <Input id="job-loc" value={form.location} onChange={(e) => set("location", e.target.value)} aria-invalid={!!errors.location} />
+          <Input id="job-loc" placeholder="e.g. Bengaluru or Remote" autoComplete="off" value={form.location} onChange={(e) => set("location", e.target.value)} aria-invalid={!!errors.location} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Mode" htmlFor="job-mode">
             <Select value={form.workMode} onValueChange={(v) => set("workMode", v as Job["workMode"])}>
               <SelectTrigger id="job-mode">
-                <SelectValue />
+                <SelectValue placeholder="Choose a work mode" />
               </SelectTrigger>
               <SelectContent>
                 {JOB_WORK_MODES.map((m) => (
@@ -251,7 +251,7 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
           <Field label="Type" htmlFor="job-type">
             <Select value={form.employmentType} onValueChange={(v) => set("employmentType", v as Job["employmentType"])}>
               <SelectTrigger id="job-type">
-                <SelectValue />
+                <SelectValue placeholder="Choose a role type" />
               </SelectTrigger>
               <SelectContent>
                 {JOB_TYPES.map((t) => (
@@ -263,38 +263,62 @@ function JobForm({ job, skills, onSaved }: { job: Job | null; skills: { slug: st
             </Select>
           </Field>
         </div>
-        <Field label={form.employmentType === "internship" ? "Stipend min (₹/month)" : "CTC min (₹/year)"} htmlFor="job-min" error={errors.salaryMin}>
-          <Input id="job-min" inputMode="numeric" value={form.salaryMin} onChange={(e) => set("salaryMin", e.target.value.replace(/\D/g, ""))} />
+        <Field label={form.employmentType === "internship" ? "Stipend min (₹/month)" : "CTC min (₹/year)"} htmlFor="job-min" error={errors.salaryMin} hint="Digits only, in rupees.">
+          <Input id="job-min" inputMode="numeric" autoComplete="off" placeholder={form.employmentType === "internship" ? "e.g. 25000" : "e.g. 600000"} value={form.salaryMin} onChange={(e) => set("salaryMin", e.target.value.replace(/\D/g, ""))} />
         </Field>
-        <Field label={form.employmentType === "internship" ? "Stipend max (₹/month)" : "CTC max (₹/year)"} htmlFor="job-max" error={errors.salaryMax}>
-          <Input id="job-max" inputMode="numeric" value={form.salaryMax} onChange={(e) => set("salaryMax", e.target.value.replace(/\D/g, ""))} aria-invalid={!!errors.salaryMax} />
+        <Field label={form.employmentType === "internship" ? "Stipend max (₹/month)" : "CTC max (₹/year)"} htmlFor="job-max" error={errors.salaryMax} hint="Digits only, in rupees.">
+          <Input id="job-max" inputMode="numeric" autoComplete="off" placeholder={form.employmentType === "internship" ? "e.g. 40000" : "e.g. 1200000"} value={form.salaryMax} onChange={(e) => set("salaryMax", e.target.value.replace(/\D/g, ""))} aria-invalid={!!errors.salaryMax} />
         </Field>
         <Field label={`Minimum Proof Score: ${form.minProofScore}`} htmlFor="job-score">
           <input id="job-score" type="range" min={0} max={95} step={5} value={form.minProofScore} onChange={(e) => set("minProofScore", Number(e.target.value))} className="w-full accent-[var(--lime)]" />
         </Field>
         <Field label="Openings" htmlFor="job-openings" error={errors.openings}>
-          <Input id="job-openings" type="number" min={1} max={500} value={form.openings} onChange={(e) => set("openings", Number(e.target.value))} />
+          <Input id="job-openings" type="number" inputMode="numeric" placeholder="e.g. 3" min={1} max={500} value={form.openings} onChange={(e) => set("openings", Number(e.target.value))} />
         </Field>
         <div className="grid gap-2 sm:col-span-2">
           <span className="text-[13px] font-medium">Required verified skills</span>
-          <ul className="flex flex-wrap gap-2">
-            {form.requiredSkills.map((r, i) => (
-              <li key={r.skillSlug} className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-2 py-1 pr-1 pl-2.5 text-sm">
-                {skills.find((s) => s.slug === r.skillSlug)?.name ?? r.skillSlug}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={r.minScore}
-                  aria-label={`Minimum score for ${r.skillSlug}`}
-                  onChange={(e) => set("requiredSkills", form.requiredSkills.map((x, j) => (j === i ? { ...x, minScore: Number(e.target.value) } : x)))}
-                  className="w-14 rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-xs"
-                />
-                <button type="button" aria-label="Remove skill" onClick={() => set("requiredSkills", form.requiredSkills.filter((_, j) => j !== i))} className="grid size-6 place-items-center rounded text-subtle hover:text-coral-text">
-                  <X className="size-3.5" />
-                </button>
-              </li>
-            ))}
+          {/* Phones: one full-width row per skill (name, compact min box, remove). sm+: inline chips. */}
+          <ul className="grid gap-2 sm:flex sm:flex-wrap">
+            {form.requiredSkills.map((r, i) => {
+              const name = skills.find((s) => s.slug === r.skillSlug)?.name ?? r.skillSlug;
+              return (
+                <li
+                  key={r.skillSlug}
+                  className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-surface-2 py-1 pr-1 pl-3 text-sm sm:inline-flex sm:pl-2.5"
+                >
+                  <span className="min-w-0 flex-1 truncate sm:flex-none">{name}</span>
+                  <label className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] text-subtle">
+                    <span aria-hidden>min</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      placeholder="50"
+                      value={r.minScore}
+                      aria-label={`Minimum ${name} score`}
+                      onChange={(e) =>
+                        set(
+                          "requiredSkills",
+                          form.requiredSkills.map((x, j) =>
+                            j === i ? { ...x, minScore: Math.max(0, Math.min(100, Number(e.target.value) || 0)) } : x,
+                          ),
+                        )
+                      }
+                      className="h-8 min-h-0 w-12 min-w-0 rounded-md border border-line bg-surface px-1 text-center font-mono text-[13px] text-ink sm:h-6 sm:w-11 sm:text-xs"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${name}`}
+                    onClick={() => set("requiredSkills", form.requiredSkills.filter((_, j) => j !== i))}
+                    className="grid size-8 min-h-0 min-w-0 shrink-0 place-items-center rounded text-subtle hover:text-coral-text sm:size-6"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           {form.requiredSkills.length < 8 && (
             <Select

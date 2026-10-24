@@ -8,7 +8,7 @@ export function JobFilter({ jobs, value }: { jobs: { id: string; title: string }
   return (
     <Select value={value ?? "all"} onValueChange={(v) => router.push(v === "all" ? "/recruiter/pipeline" : `/recruiter/pipeline?job=${v}`)}>
       <SelectTrigger className="w-[min(16rem,100%)]" aria-label="Filter the board by job">
-        <SelectValue />
+        <SelectValue placeholder="All jobs" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">All jobs</SelectItem>

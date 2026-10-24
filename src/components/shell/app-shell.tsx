@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Logo } from "@/components/brand/logo";
+import { DemoRoleSwitcher } from "@/components/demo/demo-role-switcher";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Kbd } from "@/components/ui/kbd";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { CommandPalette } from "./command-palette";
 import { NAV, PORTAL_TITLE } from "./nav-config";
 import { NotificationsBell, type ShellNotification } from "./notifications-bell";
+import { useLiveNotifications } from "./use-live-notifications";
 import { UserMenu, type ShellUser } from "./user-menu";
 
 export type AppShellProps = {
@@ -21,6 +23,8 @@ export type AppShellProps = {
   user: ShellUser;
   notifications: ShellNotification[];
   unreadCount: number;
+  /** Server render time: the live stream starts from here so nothing between render and connect is lost. */
+  notificationsSince: string;
   children: ReactNode;
 };
 
@@ -68,14 +72,15 @@ function SidebarNav({ portal, onNavigate }: { portal: Portal; onNavigate?: () =>
   );
 }
 
-export function AppShell({ portal, user, notifications, unreadCount, children }: AppShellProps) {
+export function AppShell({ portal, user, notifications, unreadCount, notificationsSince, children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const live = useLiveNotifications(notifications, unreadCount, notificationsSince);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
     <div className="min-h-dvh bg-canvas">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-canvas px-3 pt-4 pb-3 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-canvas px-3 pt-4 pb-3 lg:flex print:hidden">
         <div className="flex items-center justify-between px-2 pb-6">
           <Logo href={`/${portal}`} />
           <Badge variant="outline" mono className="text-[10px] tracking-wider uppercase">
@@ -107,9 +112,9 @@ export function AppShell({ portal, user, notifications, unreadCount, children }:
         </SheetContent>
       </Sheet>
 
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 print:pl-0">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-line bg-canvas/80 px-4 backdrop-blur-md sm:px-6">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-line bg-canvas/80 px-4 backdrop-blur-md sm:px-6 print:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -136,7 +141,7 @@ export function AppShell({ portal, user, notifications, unreadCount, children }:
 
           <div className="flex items-center gap-1 lg:ml-auto">
             <ThemeToggle />
-            <NotificationsBell items={notifications} unreadCount={unreadCount} />
+            <NotificationsBell items={live.items} unreadCount={live.unreadCount} />
             <UserMenu user={user} variant="avatar" />
           </div>
         </header>
@@ -147,6 +152,7 @@ export function AppShell({ portal, user, notifications, unreadCount, children }:
       </div>
 
       <CommandPalette portal={portal} open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <DemoRoleSwitcher email={user.email} />
     </div>
   );
 }

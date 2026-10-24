@@ -66,6 +66,8 @@ export function JobsBoard({ jobs, proofScore }: { jobs: BoardJob[]; proofScore: 
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by role, company or skill"
+            inputMode="search"
+            autoComplete="off"
             className="pl-10"
           />
         </div>
@@ -95,7 +97,7 @@ export function JobsBoard({ jobs, proofScore }: { jobs: BoardJob[]; proofScore: 
           <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
             <Select value={location} onValueChange={setLocation}>
               <SelectTrigger aria-label="Location" className="h-9 sm:w-40">
-                <SelectValue />
+                <SelectValue placeholder="Any location" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All locations</SelectItem>
@@ -108,7 +110,7 @@ export function JobsBoard({ jobs, proofScore }: { jobs: BoardJob[]; proofScore: 
             </Select>
             <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
               <SelectTrigger aria-label="Sort" className="h-9 sm:w-36">
-                <SelectValue />
+                <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="match">Best match</SelectItem>

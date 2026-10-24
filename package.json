@@ -66,14 +66,14 @@
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.180.0",
     "drizzle-kit": "^0.31.11",
-    "eslint": "^9.39.5",
+    "eslint": "^10.13.0",
     "eslint-config-next": "^16.4.3",
     "jsqr": "^1.4.0",
     "playwright": "^1.64.1",
     "postcss": "^8.5.31",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3",
-    "vitest": "^3.2.7"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
   }
 }

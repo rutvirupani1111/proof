@@ -6,6 +6,7 @@ import { useState, useTransition, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
@@ -91,10 +92,10 @@ export function SettingsForms({
           }}
         >
           <Field label="Full name" htmlFor="settings-name" error={acc.errors.name}>
-            <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />
+            <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="e.g. Ishita Varma" required />
           </Field>
           <Field label="Email" htmlFor="settings-email" hint="Your sign-in email. It cannot be changed here.">
-            <Input id="settings-email" value={account.email} readOnly disabled />
+            <Input id="settings-email" type="email" value={account.email} autoComplete="email" readOnly disabled />
           </Field>
           <div className="sm:col-span-2">
             <Button type="submit" disabled={acc.pending || name.trim() === savedName}>
@@ -124,20 +125,20 @@ export function SettingsForms({
             <KeyRound className="size-4 text-muted" aria-hidden /> Change password
           </p>
           <Field label="Current password" htmlFor="settings-pw-current">
-            <Input
+            <PasswordInput
               id="settings-pw-current"
-              type="password"
               autoComplete="current-password"
+              placeholder="Your current password"
               value={pw.current}
               onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
               required
             />
           </Field>
           <Field label="New password" htmlFor="settings-pw-new" hint="At least 8 characters.">
-            <Input
+            <PasswordInput
               id="settings-pw-new"
-              type="password"
               autoComplete="new-password"
+              placeholder="At least 8 characters"
               minLength={8}
               value={pw.next}
               onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { signIn } from "@/lib/auth/client";
 import { homeFor, safeNext } from "@/lib/auth/roles";
 import { fieldErrors, loginSchema } from "@/lib/validation/auth";
@@ -37,14 +38,25 @@ export function LoginForm() {
       <p className="mt-2 text-sm text-muted">Sign in to your Proof account.</p>
       <form onSubmit={onSubmit} noValidate className="mt-8 grid gap-4">
         <Field label="Email" htmlFor="email" error={errors.email}>
-          <Input id="email" name="email" type="email" autoComplete="email" required aria-invalid={!!errors.email} />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="you@college.edu"
+            required
+            aria-invalid={!!errors.email}
+          />
         </Field>
         <Field label="Password" htmlFor="password" error={errors.password}>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
+            placeholder="Your password"
             required
             aria-invalid={!!errors.password}
           />

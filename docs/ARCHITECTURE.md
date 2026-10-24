@@ -27,6 +27,7 @@ src/
       student/           layout.tsx -> <PortalLayout portal="student">, page.tsx, [...slug] placeholder
       recruiter/  college/  mentor/   same shape
     api/auth/[...all]/   Better Auth handler
+    api/notifications/stream/  SSE live notifications (session-scoped; polls, heartbeats, self-closes at 45 s)
     globals.css          design tokens (light paper + dark ink) and keyframes
   components/
     ui/                  the component kit (one component per file, no barrel)
@@ -47,6 +48,7 @@ src/
     auth/auth.ts         getAuth(): Better Auth instance (lazy, DB-backed secret)
     auth/guard.ts        requireRole / requireUser / assertRole / getCurrentUser   <- THE guard
     secrets.ts           getOrCreateSecret(): generated-once secrets in app_secrets
+    demo/actions.ts      demoSignIn(): one-tap demo logins, only when NEXT_PUBLIC_DEMO_MODE=true (lib/demo.ts)
     <area>/queries.ts    reads, scoped by role and ownership
     <area>/actions.ts    "use server" mutations (create when needed)
   proxy.ts               optimistic cookie check for portal routes

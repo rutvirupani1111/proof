@@ -9,6 +9,10 @@
  * sender domain) the on-screen fallback applies: the code or link is shown in the UI with an
  * "email not configured yet" note in demo mode (NEXT_PUBLIC_DEMO_MODE=true) or outside
  * production builds, and a friendly error everywhere else.
+ *
+ * Password-reset codes are the exception: they are shown on screen only outside production
+ * builds. On the live demo showcase anyone can type any address, so an on-screen reset code
+ * would let them take over a real account.
  */
 import "server-only";
 
@@ -19,6 +23,8 @@ export type EmailConfig = {
   configured: boolean;
   /** May the code / link be shown on screen when the email cannot be sent? */
   fallbackVisible: boolean;
+  /** Same, for password-reset codes: development and tests only, never a production build. */
+  resetFallbackVisible: boolean;
 };
 
 type Env = Record<string, string | undefined>;
@@ -31,6 +37,7 @@ export function emailConfig(env: Env = process.env, demoMode = process.env.NEXT_
     from,
     configured: !!apiKey && !!from,
     fallbackVisible: demoMode || env.NEXT_PUBLIC_DEMO_MODE === "true" || env.NODE_ENV !== "production",
+    resetFallbackVisible: env.NODE_ENV !== "production",
   };
 }
 

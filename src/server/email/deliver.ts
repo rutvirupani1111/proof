@@ -3,7 +3,8 @@
  *
  *   1. Per-recipient rate limit per template (RATE_LIMITS).
  *   2. Not configured (RESEND_API_KEY or EMAIL_FROM missing) or the provider rejects the sender domain / key
- *      -> "onscreen" when the fallback may be shown (demo mode or development), else "failed".
+ *      -> "onscreen" when the fallback may be shown (demo mode or development; password-reset codes
+ *      in development only), else "failed".
  *   3. Any other provider error -> "failed" with a friendly message.
  *
  * Every attempt is recorded, so the UI can ask "what happened to my last code?" and the rate
@@ -60,6 +61,8 @@ export type DeliverDeps = {
   /** Logged / recorded when `transport` or `from` is missing. */
   notConfiguredReason?: string | null;
   fallbackVisible: boolean;
+  /** Overrides `fallbackVisible` for password-reset codes. Missing = never shown. */
+  resetFallbackVisible?: boolean;
   /** Attempts (excluding rate_limited ones) for this recipient + template since `since`. */
   recentCount(to: string, template: TemplateKey, since: Date): Promise<number>;
   record(row: DeliveryRecord): Promise<void>;
@@ -96,7 +99,8 @@ export async function deliver(message: EmailMessage, deps: DeliverDeps): Promise
   }
 
   const fallback = async (reason: string): Promise<DeliveryResult> => {
-    if (deps.fallbackVisible) {
+    const visible = message.template === "password-reset" ? !!deps.resetFallbackVisible : deps.fallbackVisible;
+    if (visible) {
       const reveal = message.reveal ?? {};
       await deps.record({ ...base, status: "onscreen", reason, reveal });
       return { status: "onscreen", reason, reveal };

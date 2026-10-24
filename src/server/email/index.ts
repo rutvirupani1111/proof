@@ -38,6 +38,7 @@ export async function sendEmail(message: EmailMessage): Promise<DeliveryResult> 
     from: cfg.from,
     notConfiguredReason: notConfiguredReason(cfg),
     fallbackVisible: cfg.fallbackVisible,
+    resetFallbackVisible: cfg.resetFallbackVisible,
     async recentCount(to, template, since) {
       const [row] = await db
         .select({ n: sql<number>`count(*)::int` })

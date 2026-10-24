@@ -6,7 +6,8 @@
  * row (demo mode / development fallback), and only to the right person:
  *   - verification: the signed-in user's own address (session, never the client);
  *   - password reset: the typed address, except the shared demo accounts (their reset would lock
- *     every visitor out of the showcase).
+ *     every visitor out of the showcase), and only outside production builds (on the live
+ *     showcase it would let anyone take over a real account).
  */
 import { z } from "zod";
 import { demoAccountForEmail } from "@/lib/demo";
@@ -24,14 +25,16 @@ export type CodeDelivery =
   | { state: "none"; email: string };
 
 const NOTE = "Email isn't configured yet, so your code is shown here instead.";
+const RESET_UNAVAILABLE = "Password reset by email isn't switched on for this site yet, so we can't send you a code.";
 
-function fromRow(email: string, row: Awaited<ReturnType<typeof latestDelivery>>, reveal: boolean): CodeDelivery {
+function fromRow(email: string, row: Awaited<ReturnType<typeof latestDelivery>>, reveal: boolean, unavailable = FRIENDLY_FAILURE): CodeDelivery {
   if (!row) return { state: "none", email };
   const sentAt = row.createdAt.toISOString();
   if (row.status === "sent") return { state: "sent", email, sentAt };
   if (row.status === "rate_limited") return { state: "rate_limited", email, message: "Too many codes requested. Wait a few minutes and try again." };
   if (row.status === "onscreen" && reveal && emailConfig().fallbackVisible) return { state: "onscreen", email, sentAt, code: row.reveal?.code ?? null, note: NOTE };
-  return { state: "failed", email, message: FRIENDLY_FAILURE };
+  const notSetUp = row.status === "onscreen" || /not configured|not verified|key was rejected/i.test(row.reason ?? "");
+  return { state: "failed", email, message: notSetUp ? unavailable : FRIENDLY_FAILURE };
 }
 
 export async function verificationCodeStatus(): Promise<CodeDelivery | null> {
@@ -47,5 +50,5 @@ export async function resetCodeStatus(input: unknown): Promise<CodeDelivery | nu
   if (demoAccountForEmail(email)) {
     return { state: "failed", email, message: "Demo accounts share one password (shown on the sign-in page), so they can't be reset." };
   }
-  return fromRow(email, await latestDelivery(email, "password-reset"), true);
+  return fromRow(email, await latestDelivery(email, "password-reset"), emailConfig().resetFallbackVisible, RESET_UNAVAILABLE);
 }

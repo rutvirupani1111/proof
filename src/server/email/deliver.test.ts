@@ -34,6 +34,8 @@ describe("emailConfig", () => {
     expect(emailConfig({ NODE_ENV: "development" }, false).fallbackVisible).toBe(true);
     expect(emailConfig({ NODE_ENV: "production", NEXT_PUBLIC_DEMO_MODE: "true" }, false).fallbackVisible).toBe(true);
     expect(emailConfig({ NODE_ENV: "production" }, false).fallbackVisible).toBe(false);
+    expect(emailConfig({ NODE_ENV: "production", NEXT_PUBLIC_DEMO_MODE: "true" }, true).resetFallbackVisible).toBe(false);
+    expect(emailConfig({ NODE_ENV: "development" }, false).resetFallbackVisible).toBe(true);
   });
   it("explains what is missing", () => {
     expect(notConfiguredReason({ apiKey: "re_x", from: null })).toMatch(/EMAIL_FROM/);
@@ -43,6 +45,15 @@ describe("emailConfig", () => {
 });
 
 describe("deliver", () => {
+  it("never shows a password-reset code on screen unless resetFallbackVisible (live showcase takeover)", async () => {
+    const reset: EmailMessage = { ...msg, template: "password-reset" };
+    const { d, rows } = deps({ transport: null, fallbackVisible: true });
+    expect(await deliver(reset, d)).toMatchObject({ status: "failed" });
+    expect(rows[0]).toMatchObject({ status: "failed", reveal: null });
+    const { d: dev } = deps({ transport: null, fallbackVisible: true, resetFallbackVisible: true });
+    expect(await deliver(reset, dev)).toMatchObject({ status: "onscreen", reveal: { code: "123456" } });
+  });
+
   it("sends through the transport and never stores the code", async () => {
     const { d, rows, sent } = deps();
     expect(await deliver(msg, d)).toEqual({ status: "sent", id: "re_1" });

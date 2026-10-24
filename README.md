@@ -68,6 +68,38 @@ Auth base URL resolves from the Vercel host). The `vercel-build` script runs
 users. Deploy with `vercel deploy --prod` (remote build). To reseed by hand:
 `PROOF_SEED_REMOTE=1 DATABASE_URL=... npm run db:seed`.
 
+## Email (Resend)
+
+All mail goes through one adapter, `src/server/email/` (`sendEmail` / `send(to, subject, html, text)`),
+with branded HTML + text templates for the sign-up code, password reset code, domain magic link,
+welcome and new-message emails. Every attempt is logged in `email_deliveries`, which also drives
+per-recipient rate limits (5 codes or links per 10 minutes, 1 welcome a day, 1 message email per
+15 minutes).
+
+- **Sign-up:** new accounts get a 6-digit code (Better Auth `emailOTP`, 10-minute expiry, 5
+  attempts) and land on `/verify-email`; portals redirect there until the email is verified.
+  Seeded demo accounts, and every account created before this feature, are already verified.
+- **Forgot password:** `/forgot-password` sends a code, `/reset-password` takes the code and the
+  new password (strength meter) and signs the account out on every device.
+- **Domain verification** (mentor, recruiter, college) emails the magic link.
+- **New message:** students get an email for a new in-app message unless they muted "Messages" in
+  notification settings.
+
+**Two settings turn real sending on**, both in Vercel env (nothing is hardcoded):
+
+| Variable | Value |
+|---|---|
+| `RESEND_API_KEY` | the Resend API key (secret) |
+| `EMAIL_FROM` | the sender, e.g. `Name <noreply@your-domain>`, set once that domain is verified in Resend |
+
+Email counts as configured only when both are set. Until then, or while Resend still rejects the
+sender domain, Proof falls back: in demo mode (`NEXT_PUBLIC_DEMO_MODE=true`) and in local
+development the code or link is shown on screen with an "Email not configured yet" note; anywhere
+else the user sees a friendly "we couldn't send the email" message. To finish the setup: add the
+domain in Resend (Domains, Add domain), publish the DNS records Resend lists at the domain's DNS
+host (for an `is-a.dev` subdomain that is a pull request to the is-a.dev register), wait for
+Resend to show **Verified**, then set `EMAIL_FROM` in Vercel and redeploy.
+
 ## Billing (Stripe, test mode)
 
 Plans (INR, monthly): Recruiter Starter ₹2,999 per seat, Recruiter Growth ₹7,999 per seat,

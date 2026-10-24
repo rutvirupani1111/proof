@@ -77,6 +77,25 @@ stream polls the user's own rows, sends a heartbeat every 15 s and closes itself
 inside the function limit; the browser reconnects on its own with `Last-Event-ID`, so nothing is
 missed across the gap.
 
+## Email: sign-up codes, password reset, magic links
+
+The showcase does not send real email until both `RESEND_API_KEY` and `EMAIL_FROM` are set in
+Vercel (`EMAIL_FROM` like `Name <noreply@your-domain>`, set once that domain is verified in
+Resend; see the README). Until then everything still works in demo mode:
+
+- **Sign up** with any address: you land on **Check your email** (`/verify-email`). An "Email not
+  configured yet" box shows the 6-digit code; tap **Use code** or type or paste it into the six
+  boxes. The code expires in 10 minutes, allows 5 wrong attempts, and **Resend code** unlocks after
+  60 seconds. Until the code is confirmed, every portal redirects back to this screen.
+- **Forgot password** (link under the password field on `/login`): enter your email, then on
+  `/reset-password` enter the code shown on screen and a new password. Every other session is
+  signed out. The shared demo accounts cannot be reset (their password is public above).
+- **Domain verification** (Arjun at `/recruiter/company`, or a mentor at `/mentor/verify`): the
+  magic link appears on screen instead of in an inbox.
+
+Once email is configured, the same screens say "Sent to ..." and nothing is shown on screen.
+Outside demo mode and development, a send failure shows a friendly error instead of the code.
+
 ## Payments (Stripe test mode)
 
 The showcase runs Stripe in **test mode**; no real money moves.

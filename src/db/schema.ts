@@ -831,6 +831,32 @@ export const driveStudents = pgTable(
 /* Platform                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Every transactional email Proof tried to send (src/server/email). Drives per-recipient rate
+ * limits and, while no provider is configured, the on-screen fallback: `reveal` holds the code or
+ * link only for `status = "onscreen"` rows (demo mode / development), never for sent mail.
+ */
+export const emailDeliveries = pgTable(
+  "email_deliveries",
+  {
+    id: id(),
+    /** Lower-cased recipient address. */
+    to: text("to").notNull(),
+    /** Template key: verify-code, password-reset, domain-link, welcome, new-message. */
+    template: text("template").notNull(),
+    subject: text("subject").notNull(),
+    /** sent | onscreen | failed | rate_limited */
+    status: text("status").notNull(),
+    /** Why it was not sent (missing key, unverified domain, provider error). */
+    reason: text("reason"),
+    providerId: text("provider_id"),
+    /** On-screen fallback payload ({ code?, link? }); null whenever the email really went out. */
+    reveal: jsonb("reveal").$type<{ code?: string; link?: string } | null>(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("email_deliveries_to_idx").on(t.to, t.template, t.createdAt)],
+);
+
 export const notifications = pgTable(
   "notifications",
   {
@@ -1088,3 +1114,4 @@ export type Credential = typeof credentials.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type EmailDelivery = typeof emailDeliveries.$inferSelect;

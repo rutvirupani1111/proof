@@ -15,6 +15,17 @@ export const signupSchema = z.object({
 });
 export type SignupInput = z.infer<typeof signupSchema>;
 
+export const forgotPasswordSchema = z.object({ email: z.email("Enter a valid email.") });
+
+export const resetPasswordSchema = z.object({
+  email: z.email("Enter a valid email."),
+  otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit code."),
+  password: z.string().min(8, "Use at least 8 characters.").max(128),
+});
+
+/** sessionStorage key carrying the email from /forgot-password to /reset-password (kept out of the URL). */
+export const RESET_EMAIL_KEY = "proof:reset-email";
+
 /** Flatten a ZodError into { field: firstMessage } for forms. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};

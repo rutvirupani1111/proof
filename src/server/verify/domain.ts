@@ -7,7 +7,8 @@
  *
  * Tokens live in Better Auth's `verifications` table under identifier `domain:<purpose>:<userId>`;
  * only the sha256 of the secret is stored, with the email it was sent to. 30-minute expiry.
- * Email goes through Resend when RESEND_API_KEY is set (EMAIL_FROM optional).
+ * Email goes through the mail adapter (src/server/email): sent when RESEND_API_KEY and EMAIL_FROM
+ * are set, shown on screen only in demo mode / development, a friendly error otherwise.
  *
  * Callers authorise first: pass the session user's id and email, never client values, and check
  * the consumed `userId` against the session before flipping any verification flag.
@@ -16,6 +17,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { verifications } from "@/db/schema";
+import { domainLinkEmail, sendEmail } from "@/server/email";
 import {
   DOMAIN_LINK_TTL_MS,
   confirmPathFor,
@@ -32,25 +34,10 @@ export { institutionalEmailProblem, isFreeMailDomain, type DomainPurpose } from 
 
 export class DomainVerificationError extends Error {}
 
-export function emailProviderConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY;
-}
-
-async function sendMagicLinkEmail(to: string, link: string, purpose: DomainPurpose): Promise<void> {
+async function sendMagicLinkEmail(to: string, link: string, purpose: DomainPurpose) {
   const what = purpose === "mentor" ? "your mentor domain" : purpose === "company" ? "your company domain" : "your college domain";
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? "Proof <onboarding@resend.dev>",
-      to: [to],
-      subject: `Verify ${what} on Proof`,
-      text: `Open this link within 30 minutes to verify @${domainOf(to)} on Proof:\n\n${link}\n\nIf you did not ask for this, ignore this email.`,
-      html: `<p>Open this link within 30 minutes to verify <strong>@${domainOf(to)}</strong> on Proof:</p><p><a href="${link}">Verify @${domainOf(to)}</a></p><p>If you did not ask for this, ignore this email.</p>`,
-    }),
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) throw new DomainVerificationError("The verification email could not be sent. Try again in a minute.");
+  const minutes = Math.round(DOMAIN_LINK_TTL_MS / 60_000);
+  return sendEmail({ to, template: "domain-link", ...domainLinkEmail({ link, domain: domainOf(to), what, minutes }), reveal: { link } });
 }
 
 export async function createDomainMagicLink({
@@ -81,9 +68,11 @@ export async function createDomainMagicLink({
   });
 
   const link = `${baseUrl.replace(/\/$/, "")}${confirmPathFor(purpose)}?token=${encodeURIComponent(token)}`;
-  if (!emailProviderConfigured()) return { link, delivered: false, expiresAt };
-  await sendMagicLinkEmail(email, link, purpose);
-  return { link, delivered: true, expiresAt };
+  const res = await sendMagicLinkEmail(email, link, purpose);
+  if (res.status === "sent") return { link, delivered: true, expiresAt };
+  // Email not configured yet (demo mode / development): the caller shows the link on screen.
+  if (res.status === "onscreen") return { link, delivered: false, expiresAt };
+  throw new DomainVerificationError(res.message);
 }
 
 /** Validates and burns a token. Returns null when unknown, expired, already used or tampered. */

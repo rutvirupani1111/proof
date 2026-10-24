@@ -46,7 +46,7 @@ export function RequestOrgDomainLink({ purpose, domain }: { purpose: Purpose; do
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm">
           {sent.link ? (
             <>
-              <p className="font-medium">No email provider is configured, so here is the link (valid 30 minutes, single use):</p>
+              <p className="font-medium">Email not configured yet, so here is the link (valid 30 minutes, single use):</p>
               <Link href={sent.link} className="mt-1 inline-flex items-center font-mono text-xs break-all text-violet-text hover:underline">
                 {sent.link}
               </Link>

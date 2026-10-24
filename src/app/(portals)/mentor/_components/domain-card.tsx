@@ -104,7 +104,7 @@ export function DomainCard({ email, domain, hasProfile, verifiedAt, problem }: P
               ) : (
                 <div className="rounded-xl border border-dashed border-violet/40 bg-violet-soft p-3.5">
                   <p className="font-mono text-[11px] tracking-[0.12em] text-violet-text uppercase">Development mode</p>
-                  <p className="mt-1 text-sm text-ink">No email provider is configured, so here is your link:</p>
+                  <p className="mt-1 text-sm text-ink">Email not configured yet, so here is your link:</p>
                   <code className="mt-2 block rounded-lg border border-line bg-surface px-2.5 py-2 font-mono text-[11px] leading-relaxed break-all text-muted">
                     {sent.link}
                   </code>

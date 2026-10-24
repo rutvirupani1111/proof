@@ -1,0 +1,129 @@
+# Continuous integration for Proof. A walkthrough of every step lives in docs/CICD.md.
+#
+# Two jobs:
+#   checks -> lint, typecheck, unit tests, production build (uploads the build for the next job)
+#   smoke  -> starts that exact build on PGlite with the demo seed and drives it with Playwright
+#
+# Continuous delivery is NOT done here: Vercel's Git integration deploys production from main and
+# a preview URL for every pull request, so this workflow needs no secrets at all.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch: # adds a "Run workflow" button on the Actions tab
+
+# Least privilege: the workflow can read the code and nothing else.
+permissions:
+  contents: read
+
+# A new push to the same pull request (or to main) cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 22 (with the npm download cache)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies exactly as locked
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Generate Next.js types (next-env.d.ts is gitignored)
+        run: npx next typegen
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests (vitest)
+        run: npm test
+
+      - name: Restore the Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'next.config.ts') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload the build for the smoke job
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            .next
+            !.next/cache
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  smoke:
+    name: Playwright smoke test
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 22 (with the npm download cache)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies exactly as locked
+        run: npm ci
+
+      - name: Make sure Playwright is installed
+        # Uses the version from package-lock.json when it is there; otherwise installs a pinned one
+        # without touching package.json.
+        run: node -e "require.resolve('playwright/test')" || npm install --no-save --no-audit --no-fund playwright@1.64.1
+
+      - name: Install Chromium and its system libraries
+        run: npx playwright install --with-deps chromium
+
+      - name: Download the build from the checks job
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
+
+      - name: Create and seed the demo database (PGlite, no DATABASE_URL)
+        run: |
+          npm run db:migrate
+          npm run db:seed
+
+      - name: Run the smoke test
+        run: npx playwright test --config .github/e2e/playwright.config.mjs
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14

@@ -18,7 +18,7 @@ import {
   shortlists,
   skillChecks,
 } from "@/db/schema";
-import type { JobInput, PipelineStageId, SearchFiltersInput } from "@/lib/validation/recruiter";
+import { PIPELINE_STAGE_LABEL, type JobInput, type PipelineStageId, type SearchFiltersInput } from "@/lib/validation/recruiter";
 import { canSeeCandidate } from "./queries";
 import { ScopeError, type RecruiterScope } from "./scope";
 
@@ -44,18 +44,45 @@ async function assertCandidate(scope: RecruiterScope, studentUserId: string) {
 
 /* ---------------------------------------------------------------- pipeline */
 
+/**
+ * Stages a student hears about when a recruiter moves their card. "Sourced" is the recruiter's
+ * private long list and "Rejected" is an internal triage column, so neither notifies.
+ */
+const NOTIFY_STAGES: ReadonlySet<PipelineStageId> = new Set(["contacted", "skill_check", "interview", "offer", "hired"]);
+
 /** Move a card. Fails for any card outside the recruiter's company. */
 export async function moveCard(
   scope: RecruiterScope,
   input: { cardId: string; stage: PipelineStageId; position: number },
 ) {
   const db = await getDb();
+  const inScope = and(eq(pipelineCards.id, input.cardId), eq(pipelineCards.companyId, scope.companyId));
+  const before = await db.query.pipelineCards.findFirst({
+    where: inScope,
+    columns: { stage: true, studentUserId: true, jobId: true },
+  });
+  if (!before) throw new ScopeError("Card not found in your pipeline.");
   const [updated] = await db
     .update(pipelineCards)
     .set({ stage: input.stage, position: input.position })
-    .where(and(eq(pipelineCards.id, input.cardId), eq(pipelineCards.companyId, scope.companyId)))
+    .where(inScope)
     .returning({ id: pipelineCards.id, stage: pipelineCards.stage, position: pipelineCards.position });
   if (!updated) throw new ScopeError("Card not found in your pipeline.");
+  if (before.stage !== input.stage && NOTIFY_STAGES.has(input.stage)) {
+    const [company, job] = await Promise.all([
+      companyName(scope.companyId),
+      before.jobId
+        ? db.query.jobs.findFirst({ where: eq(jobs.id, before.jobId), columns: { title: true } })
+        : Promise.resolve(undefined),
+    ]);
+    await db.insert(notifications).values({
+      userId: before.studentUserId,
+      type: "application.stage",
+      title: `${company} moved you to ${PIPELINE_STAGE_LABEL[input.stage]}`,
+      body: job ? `For ${job.title}.` : "Your candidacy moved forward.",
+      href: "/student/applications",
+    });
+  }
   return updated;
 }
 

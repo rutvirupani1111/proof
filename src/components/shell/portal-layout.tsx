@@ -11,6 +11,7 @@ import { AppShell } from "./app-shell";
 export async function PortalLayout({ portal, children }: { portal: Portal; children: ReactNode }) {
   const user = await requireRole(PORTAL_ACCESS[portal], `/${portal}`);
   const db = await getDb();
+  const renderedAt = new Date().toISOString();
   const [{ items, unreadCount }, profile] = await Promise.all([
     getShellNotifications(user.id),
     user.role === "student"
@@ -34,6 +35,7 @@ export async function PortalLayout({ portal, children }: { portal: Portal; child
       }}
       notifications={items}
       unreadCount={unreadCount}
+      notificationsSince={renderedAt}
     >
       {children}
     </AppShell>

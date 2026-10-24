@@ -36,3 +36,22 @@ test("demo student can sign in", async ({ page }) => {
   await expect(page).toHaveURL(/\/student(\/|\?|$)/);
   await expect(page.locator("#password")).toHaveCount(0);
 });
+
+test("password field toggles between hidden and shown", async ({ page }) => {
+  await page.goto("/login");
+  await page.locator("#password").fill("not-a-real-password");
+  const toggle = page.getByRole("button", { name: "Show password" });
+  await toggle.click();
+  await expect(page.locator("#password")).toHaveAttribute("type", "text");
+  await expect(page.getByRole("button", { name: "Hide password" })).toHaveAttribute("aria-pressed", "true");
+  // The toggle never submits the form.
+  await expect(page).toHaveURL(/\/login/);
+});
+
+// The CI build reads .env.production, which turns the showcase demo mode on.
+test("demo panel signs in with one tap and offers a role switch", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: /Sign in as Meera Iyer/ }).click();
+  await expect(page).toHaveURL(/\/recruiter(\/|\?|$)/);
+  await expect(page.getByRole("button", { name: /Switch role/ })).toBeVisible();
+});

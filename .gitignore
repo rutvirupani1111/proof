@@ -26,3 +26,6 @@ npm-debug.log*
 
 # responsive audit output (scripts/screens.mjs)
 /docs/screens/
+
+# local agent notes (not part of the repo)
+/AGENTS.md

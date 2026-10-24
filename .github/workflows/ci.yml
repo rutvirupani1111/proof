@@ -33,10 +33,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Node.js 22 (with the npm download cache)
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -57,7 +57,7 @@ jobs:
         run: npm test
 
       - name: Restore the Next.js build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'next.config.ts') }}
@@ -68,7 +68,7 @@ jobs:
         run: npm run build
 
       - name: Upload the build for the smoke job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: next-build
           path: |
@@ -85,10 +85,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Node.js 22 (with the npm download cache)
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -105,7 +105,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Download the build from the checks job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: next-build
           path: .next
@@ -120,7 +120,7 @@ jobs:
 
       - name: Upload the Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
